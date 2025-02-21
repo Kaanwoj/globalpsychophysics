@@ -62,22 +62,22 @@ psi_inv <- function(x, alpha, beta) (1 / alpha * x)^(1 / beta)
 #' @param db_inv_std A function corresponding to the standard dimension.
 #' @param db_inv_tgt A function corresponding to the standard dimension.
 #' @param db_tgt A function corresponding to the standard dimension.
-#' @returns A number representing the physical intensity predicted by the
-#' global psychophysics model.
+#' @returns A number or vector representing the physical intensity predicted by
+#' the global psychophysics model.
 # TODO this should also work for a matrix of params?
 gpm <- function(task, standard_intensity,
                 alpha_std, alpha_tgt,
                 beta_std, beta_tgt,
                 w_p,
                 rho_std = NULL, rho_tgt = NULL, const = NULL) {
-  # set alpha_b to 1
+  # set alpha_b to 1, and corresponding db functions
   if (task == "bright_loud") {
     alpha_std <- 1
     db_inv_std <- db_inv_lambert
     db_inv_tgt <- db_inv_spl
     db_tgt <- db_spl
   } else {
-    alpha_std <- 1
+    alpha_tgt <- 1
     db_inv_std <- db_inv_spl
     db_inv_tgt <- db_inv_lambert
     db_tgt <- db_lambert
@@ -87,13 +87,13 @@ gpm <- function(task, standard_intensity,
     (w_p * psi(db_inv_std(standard_intensity), alpha_std, beta_std) - const) |>
       psi_inv(alpha_tgt, beta_tgt) |>
       db_tgt() |>
-      setNames(rep("x_p", length(standard_intensity)))
+      stats::setNames(rep("x_p", length(standard_intensity)))
   } else {
     (w_p * psi(db_inv_std(standard_intensity), alpha_std, beta_std) -
        psi(db_inv_std(rho_std), alpha_std, beta_std) +
        psi(db_inv_tgt(rho_std), alpha_tgt, beta_tgt)) |>
       psi_inv(alpha_tgt, beta_tgt) |>
       db_tgt() |>
-      setNames(rep("x_p", length(standard_intensity)))
+      stats::setNames(rep("x_p", length(standard_intensity)))
   }
 }
