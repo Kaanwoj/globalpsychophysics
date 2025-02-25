@@ -52,23 +52,28 @@ psi <- function(x, alpha, beta) alpha * x^beta
 #' luminance in cd/m2 or sound pressure in Pascal).
 psi_inv <- function(x, alpha, beta) (1 / alpha * x)^(1 / beta)
 
-#' Calculate global psychophysics model prediction of the phsyical intensity
-#' produced in a magnitude production task
+#' Cognitive weighting function W(p)
+weigh_fun <- function(p, w_1, w = .6) (w_1 * p^w)
+
+#' Calculate global psychophysics model prediction of the physical intensity
+#' produced in a magnitude production task with one production ratio
 #'
 #' @param task Either "bright_loud" or "loud_bright" indicating the task.
 #' @param standard_intensity A number or vector representing the physical
 #' intensity or intensities of the standard stimulus / stimuli (in dB).
 #' @param A numeric vector with the parameter values for ...
+#' @param w_p A number representing the weighted production ratios W(p)
 #' @param db_inv_std A function corresponding to the standard dimension.
 #' @param db_inv_tgt A function corresponding to the standard dimension.
 #' @param db_tgt A function corresponding to the standard dimension.
 #' @returns A number or vector representing the physical intensity predicted by
 #' the global psychophysics model.
 # TODO this should also work for a matrix of params?
-gpm <- function(task, standard_intensity,
+gpm <- function(standard_intensity,
                 alpha_std, alpha_tgt,
                 beta_std, beta_tgt,
                 w_p,
+                task = c("bright_loud", "loud_bright"),
                 rho_std = NULL, rho_tgt = NULL, const = NULL) {
   # set alpha_b to 1, and corresponding db functions
   if (task == "bright_loud") {
@@ -97,3 +102,11 @@ gpm <- function(task, standard_intensity,
       stats::setNames(rep("x_p", length(standard_intensity)))
   }
 }
+
+# TODO wrapper for gpm dealing with parameters w_p for different p in one data
+# set
+# # deal with p and w_p
+# if (!(p %in% 1:3)) stop("production factor p not valid, must bei 1, 2, or 3")
+# if (!is.null(w_p)) {
+#   w_p <- weigh_fun(p, w_1, w)
+# }

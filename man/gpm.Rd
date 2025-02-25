@@ -2,27 +2,29 @@
 % Please edit documentation in R/model.R
 \name{gpm}
 \alias{gpm}
-\title{Calculate global psychophysics model prediction of the phsyical intensity
-produced in a magnitude production task}
+\title{Calculate global psychophysics model prediction of the physical intensity
+produced in a magnitude production task with one production ratio}
 \usage{
 gpm(
-  task,
   standard_intensity,
   alpha_std,
   alpha_tgt,
   beta_std,
   beta_tgt,
   w_p,
+  task = c("bright_loud", "loud_bright"),
   rho_std = NULL,
   rho_tgt = NULL,
   const = NULL
 )
 }
 \arguments{
-\item{task}{Either "bright_loud" or "loud_bright" indicating the task.}
-
 \item{standard_intensity}{A number or vector representing the physical
 intensity or intensities of the standard stimulus / stimuli (in dB).}
+
+\item{w_p}{A number representing the weighted production ratios W(p)}
+
+\item{task}{Either "bright_loud" or "loud_bright" indicating the task.}
 
 \item{A}{numeric vector with the parameter values for ...}
 
@@ -37,6 +39,6 @@ A number or vector representing the physical intensity predicted by
 the global psychophysics model.
 }
 \description{
-Calculate global psychophysics model prediction of the phsyical intensity
-produced in a magnitude production task
+Calculate global psychophysics model prediction of the physical intensity
+produced in a magnitude production task with one production ratio
 }
