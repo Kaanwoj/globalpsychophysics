@@ -1,11 +1,30 @@
 #' @importFrom stats rbeta rlnorm rnorm runif
-create_param_set <- function(n = 1, method = "existing", restriction = "no") {
+#' @examples
+#' param <- create_param_set()
+#' param <- create_param_set(restriction = "role-independent")
+#' param <- create_param_set(restriction = "const")
+create_param_set <- function(n = 1, method = c("existing", "generate"),
+                             restriction = c("no", "role-independent", "const")) {
+  method <- method[1]
+  restriction <- restriction[1] # FIXME: is this how it should be dealt with?
   if (method == "existing") {
     out <- data.frame(alpha_b = 1, alpha_l = 15.48,
                       beta_b = 0.4, beta_l = 0.26,
-                      w_p = 0.8,
-                      rho_btol = 60.5, rho_lfromb = 21.8,
-                      rho_ltob = 8.6, rho_bfroml = 60.5)
+                      w_p = 0.8)
+    if (restriction == "no") {
+      out$rho_btol <- 38.3
+      out$rho_lfromb <- 20
+      out$rho_ltob <- 32.4
+      out$rho_bfroml <- 71.8
+    }
+    if (restriction == "role-independent") {
+      out$rho_bfroml <- out$rho_btol <- 78.2
+      out$rho_lfromb <- out$rho_ltob <- 51.4
+    }
+    if (restriction == "const") {
+      out$const_bl <- -1.622
+      out$const_lb <- 0.0803
+    }
   } else {
     out <- data.frame(alpha_b = 1,
                       alpha_l = rlnorm(n, 12, 3),

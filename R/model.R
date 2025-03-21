@@ -55,17 +55,34 @@ psi_inv <- function(x, alpha, beta) (1 / alpha * x)^(1 / beta)
 #' Cognitive weighting function W(p)
 weigh_fun <- function(p, w_1, w = .6) (w_1 * p^w)
 
+#' Calculate sum of internal references
+const_fun <- function(w_p, rho_std, db_inv_std, alpha_std, beta_std,
+                           rho_tgt, db_inv_tgt, alpha_tgt, beta_tgt) {
+  w_p * psi(db_inv_std(rho_std), alpha_std, beta_std) -
+        psi(db_inv_tgt(rho_tgt), alpha_tgt, beta_tgt)
+}
+
 #' Calculate global psychophysics model prediction of the physical intensity
 #' produced in a magnitude production task with one production ratio
 #'
-#' @param task Either "bright_loud" or "loud_bright" indicating the task.
 #' @param standard_intensity A number or vector representing the physical
-#' intensity or intensities of the standard stimulus / stimuli (in dB).
-#' @param A numeric vector with the parameter values for ...
-#' @param w_p A number representing the weighted production ratios W(p)
-#' @param db_inv_std A function corresponding to the standard dimension.
-#' @param db_inv_tgt A function corresponding to the standard dimension.
-#' @param db_tgt A function corresponding to the standard dimension.
+#' intensity/ies of the standard stimulus / stimuli (in dB).
+#' @param alpha_std A number for the parameter of the psychophysical function
+#' of the standard.
+#' @param alpha_tgt A number for the parameter of the psychophysical function
+#' of the target.
+#' @param beta_std A number for the parameter of the psychophysical function
+#' of the standard.
+#' @param beta_tgt A number for the parameter of the psychophysical function
+#' of the target.
+#' @param w_p A number representing the weighted production ratios W(p).
+#' @param rho_std A number for the internal reference parameter pertaining to
+#' the standard dimension.
+#' @param rho_tgt A number for the internal reference parameter pertaining to
+#' the target dimension.
+#' @param const A number representing the sum of rho's in the restricted model
+#'        for matching / p=1 only.
+#' @param task Either "bright_loud" or "loud_bright" indicating the task.
 #' @returns A number or vector representing the physical intensity predicted by
 #' the global psychophysics model.
 # TODO this should also work for a matrix of params?
@@ -73,8 +90,9 @@ gpm <- function(standard_intensity,
                 alpha_std, alpha_tgt,
                 beta_std, beta_tgt,
                 w_p,
-                task = c("bright_loud", "loud_bright"),
-                rho_std = NULL, rho_tgt = NULL, const = NULL) {
+                rho_std = NULL, rho_tgt = NULL, const = NULL,
+                task = c("bright_loud", "loud_bright")) {
+  # TODO: stopifnot(...)
   # set alpha_b to 1, and corresponding db functions
   if (task == "bright_loud") {
     alpha_std <- 1
@@ -87,20 +105,14 @@ gpm <- function(standard_intensity,
     db_inv_tgt <- db_inv_lambert
     db_tgt <- db_lambert
   }
-  if (is.null(rho_std)) { # restricted model for matching / p=1 only
-    # TODO reduce code duplication here
-    (w_p * psi(db_inv_std(standard_intensity), alpha_std, beta_std) - const) |>
-      psi_inv(alpha_tgt, beta_tgt) |>
-      db_tgt() |>
-      stats::setNames(rep("x_p", length(standard_intensity)))
-  } else {
-    (w_p * psi(db_inv_std(standard_intensity), alpha_std, beta_std) -
-       psi(db_inv_std(rho_std), alpha_std, beta_std) +
-       psi(db_inv_tgt(rho_std), alpha_tgt, beta_tgt)) |>
-      psi_inv(alpha_tgt, beta_tgt) |>
-      db_tgt() |>
-      stats::setNames(rep("x_p", length(standard_intensity)))
+  if (!(is.null(rho_std) & is.null(rho_tgt))) {
+    const <- const_fun(w_p, rho_std, db_inv_std, alpha_std, beta_std,
+                           rho_tgt, db_inv_tgt, alpha_tgt, beta_tgt)
   }
+  (w_p * psi(db_inv_std(standard_intensity), alpha_std, beta_std) - const) |>
+    psi_inv(alpha_tgt, beta_tgt) |>
+    db_tgt() |>
+    stats::setNames(rep("x_p", length(standard_intensity)))
 }
 
 # TODO wrapper for gpm dealing with parameters w_p for different p in one data
