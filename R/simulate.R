@@ -49,12 +49,31 @@ create_param_set <- function(n = 1, method = c("existing", "generate"),
 #' y_bright <- predict_gpm(c(34, 43, 52, 70), "loud_bright", param)
 #' y_loud <- predict_gpm(c(69, 73, 77, 85), "bright_loud", param)
 predict_gpm <- function(standards, task, param, p = 1) {
-  gpm(standards,
-      alpha_std = param$alpha_b, alpha_tgt = param$alpha_l,
-      beta_std = param$beta_b, beta_tgt = param$beta_l,
-      w_p = param$w_p,
-      task,
-      rho_std = param$rho_btol, rho_tgt = param$rho_lfromb)
+  # Ensure p is numeric
+  p <- as.numeric(p)
+  # Use the existing param$w_p but calculate the actual weight based on p
+  if (p == 1) {
+    # For p=1, use w_p directly
+    w_1 <- param$w_p
+    w <- 0.6
+  } else if (p == 2) {
+    # For p=2, use the default w value from weigh_fun (0.6)
+    w_1 <- param$w_p
+    w <- 0.6
+  } else if (p == 3) {
+    w_1 <- param$w_p
+    w <- 0.6
+  }
+  
+  # Call gpm_wrapper with explicit numeric p
+  gpm_wrapper(standard_intensity = standards,
+              alpha_std = param$alpha_b, alpha_tgt = param$alpha_l,
+              beta_std = param$beta_b, beta_tgt = param$beta_l,
+              p = p,  # Ensure this is numeric
+              w_1 = w_1,
+              w = w,
+              task = task,
+              rho_std = param$rho_btol, rho_tgt = param$rho_lfromb)
 }
 
 #' Simulate a magnitude production data set for both tasks and one or more
@@ -77,14 +96,53 @@ predict_gpm <- function(standards, task, param, p = 1) {
 #' )
 #' param <- create_param_set()
 #' simulate_gpm(20, cond, param)
-# TODO make it work for other p's than 1
 simulate_gpm <- function(ntrials, cond, param) {
   cond$task <- factor(cond$task, levels = unique(cond$task))
-  cond$mu <- split(cond, cond$task) |>
-    lapply(\(x) {predict_gpm(x$std, as.character(x$task)[1], param, p)}) |>
-    unlist() |> unname()
+  
+  # Make sure p is numeric, not character
+  cond$p <- as.numeric(cond$p)
+  
+  # Group by unique combination of task and p
+  cond_split <- split(cond, list(cond$task, cond$p))
+  
+  predictions <- lapply(cond_split, function(x) {
+    # Each group has the same task and p value
+    task_val <- as.character(x$task[1])
+    p_val <- x$p[1]
+    
+    # Generate predictions for this group
+    preds <- predict_gpm(
+      standards = x$std, 
+      task = task_val,
+      param = param,
+      p = p_val
+    )
+    
+    # Return a data frame with row indices and predictions
+    data.frame(
+      row_idx = match(x$std, cond$std[cond$task == task_val & cond$p == p_val]),
+      mu = preds
+    )
+  })
+  
+  # Combine predictions and assign to original conditions by index
+  mu_values <- numeric(nrow(cond))
+  for (i in seq_along(predictions)) {
+    name_parts <- strsplit(names(cond_split)[i], "\\.")[[1]]
+    task_name <- name_parts[1]
+    p_value <- as.numeric(name_parts[2])
+    
+    group_rows <- which(cond$task == task_name & cond$p == p_value)
+    pred_df <- predictions[[i]]
+    mu_values[group_rows] <- pred_df$mu
+  }
+  
+  cond$mu <- mu_values
+  
+  # Create output data frame with replicated rows for trials
   out <- cond[rep(seq_len(nrow(cond)), each = ntrials), ]
   out$tgt <- rnorm(nrow(out), mean = out$mu, sd = out$sigma)
   row.names(out) <- NULL
   out
 }
+

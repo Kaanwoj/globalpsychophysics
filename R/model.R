@@ -122,3 +122,37 @@ gpm <- function(standard_intensity,
 # if (!is.null(w_p)) {
 #   w_p <- weigh_fun(p, w_1, w)
 # }
+
+gpm_wrapper <- function(standard_intensity,
+                        alpha_std, alpha_tgt,
+                        beta_std, beta_tgt,
+                        p, w_1 = NULL, w = NULL, w_p = NULL,
+                        rho_std = NULL, rho_tgt = NULL, const = NULL,
+                        task = c("bright_loud", "loud_bright")) {
+  
+  # Validate production factor p
+  if (!(p %in% 1:3)) 
+    stop("Production factor p not valid, must be 1, 2, or 3")
+  
+  # Calculate w_p based on p, w_1, and w
+  if (!is.null(w_1) && !is.null(w)) {
+    w_p <- weigh_fun(p, w_1, w)
+  } else if (!is.null(w_p)) {
+    w_p <- w_p
+  } else {
+    stop("Either w_p or both w_1 and w must be provided")
+  }
+  
+  # Call the original gpm function with calculated w_p
+  result <- gpm(standard_intensity = standard_intensity,
+                alpha_std = alpha_std, alpha_tgt = alpha_tgt,
+                beta_std = beta_std, beta_tgt = beta_tgt,
+                w_p = w_p, 
+                rho_std = rho_std, rho_tgt = rho_tgt, 
+                const = const,
+                task = task)
+  
+  names(result) <- rep(paste0("x_", p), length(result))
+  
+  return(result)
+}
