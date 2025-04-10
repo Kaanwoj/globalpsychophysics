@@ -40,7 +40,11 @@ db_inv_spl <- function(db_l) {
 #' @param beta A number.
 #' @returns A number representing a perceived intentsity (e.g.
 #' brightness or loudness)
-psi <- function(x, alpha, beta) alpha * x^beta
+psi <- function(x, alpha, beta) {
+  out <- alpha * x^beta
+  if (length(out) == 0) stop("Psi function results in 0. Change parameters.")
+  out
+  }
 
 #' Inverse of psychophysical function phi(x) = alpha * x^beta
 #'
@@ -50,7 +54,11 @@ psi <- function(x, alpha, beta) alpha * x^beta
 #' @param beta A number.
 #' @returns A number representing a physical stimulus intentsity (e.g.
 #' luminance in cd/m2 or sound pressure in Pascal).
-psi_inv <- function(x, alpha, beta) (1 / alpha * x)^(1 / beta)
+psi_inv <- function(x, alpha, beta) {
+  out <- (1 / alpha * x)^(1 / beta)
+  if (length(out) == 0) stop("Inverse psi function results in 0. Change parameters.")
+  out
+}
 
 #' Cognitive weighting function W(p)
 weigh_fun <- function(p, w_1, w = .6) (w_1 * p^w)
@@ -123,6 +131,7 @@ gpm <- function(standard_intensity,
 #   w_p <- weigh_fun(p, w_1, w)
 # }
 
+#' @param w_p If w_1 and w are given, this will be ignored
 gpm_wrapper <- function(standard_intensity,
                         alpha_std, alpha_tgt,
                         beta_std, beta_tgt,

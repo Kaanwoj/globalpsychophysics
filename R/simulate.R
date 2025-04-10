@@ -1,5 +1,6 @@
 #' @importFrom stats rbeta rlnorm rnorm runif
 #' @examples
+# TODO: add w_1 and w
 #' param <- create_param_set()
 #' param <- create_param_set(restriction = "role-independent")
 #' param <- create_param_set(restriction = "const")
@@ -49,29 +50,27 @@ create_param_set <- function(n = 1, method = c("existing", "generate"),
 #' y_bright <- predict_gpm(c(34, 43, 52, 70), "loud_bright", param)
 #' y_loud <- predict_gpm(c(69, 73, 77, 85), "bright_loud", param)
 predict_gpm <- function(standards, task, param, p = 1) {
-  # Ensure p is numeric
-  p <- as.numeric(p)
-  # Use the existing param$w_p but calculate the actual weight based on p
-  if (p == 1) {
-    # For p=1, use w_p directly
-    w_1 <- param$w_p
-    w <- 0.6
-  } else if (p == 2) {
-    # For p=2, use the default w value from weigh_fun (0.6)
-    w_1 <- param$w_p
-    w <- 0.6
-  } else if (p == 3) {
-    w_1 <- param$w_p
-    w <- 0.6
+  if ("w_1" %in% names(param)) {
+    w_1 <- param$w_1
+  } else {
+    w_1 <- NULL 
+  }
+  if ("w_p" %in% names(param)) {
+    w_p <- param$w_p
+  } else {
+    w_p <- NULL 
+  }
+  if ("w" %in% names(param)) {
+    w <- param$w
+  } else {
+    w <- NULL 
   }
   
-  # Call gpm_wrapper with explicit numeric p
   gpm_wrapper(standard_intensity = standards,
               alpha_std = param$alpha_b, alpha_tgt = param$alpha_l,
               beta_std = param$beta_b, beta_tgt = param$beta_l,
-              p = p,  # Ensure this is numeric
-              w_1 = w_1,
-              w = w,
+              p = as.numeric(p),  # Ensure this is numeric
+              w_1 = w_1, w_p = w_p, w = w,
               task = task,
               rho_std = param$rho_btol, rho_tgt = param$rho_lfromb)
 }
@@ -96,11 +95,9 @@ predict_gpm <- function(standards, task, param, p = 1) {
 #' )
 #' param <- create_param_set()
 #' simulate_gpm(20, cond, param)
+# TODO: Add example for more than one p
 simulate_gpm <- function(ntrials, cond, param) {
   cond$task <- factor(cond$task, levels = unique(cond$task))
-  
-  # Make sure p is numeric, not character
-  cond$p <- as.numeric(cond$p)
   
   # Group by unique combination of task and p
   cond_split <- split(cond, list(cond$task, cond$p))
