@@ -4,6 +4,7 @@
 #' param <- create_param_set()
 #' param <- create_param_set(restriction = "role-independent")
 #' param <- create_param_set(restriction = "const")
+#' @export
 create_param_set <- function(n = 1, method = c("existing", "generate"),
                              restriction = c("no", "role-independent", "const")) {
   method <- method[1]
@@ -19,6 +20,7 @@ create_param_set <- function(n = 1, method = c("existing", "generate"),
       out$rho_bfroml <- 71.8
     }
     if (restriction == "role-independent") {
+      # TODO ist das in weiteren Funktionen implementiert?
       out$rho_bfroml <- out$rho_btol <- 78.2
       out$rho_lfromb <- out$rho_ltob <- 51.4
     }
@@ -40,15 +42,22 @@ create_param_set <- function(n = 1, method = c("existing", "generate"),
 
 #' Predict magnitude productions from global psychophysics model
 #'
-#' @param task A character string, either "bright_loud" or "loud_bright"
-#' indicating the task.
-#' @param standards A vector of numbers.
+#' @description
+#' A wrapper function that extracts parameters from a parameter set and calls
+#' the appropriate global psychophysics model function to predict magnitude productions.
+#'
+#' @param standards A vector of numbers representing the physical intensities 
+#'                  of standard stimuli (in dB).
+#' @param task A character string, either "bright_loud" or "loud_bright" 
+#'             indicating the task.
 #' @param param A named vector of numbers representing the model parameters.
-#' @returns A vector of predicted values.
+#' @param p An integer (default: 1) representing the production ratio to be used.
+#' @returns A vector of predicted physical intensities.
 #' @examples
 #' param <- create_param_set()
-#' y_bright <- predict_gpm(c(34, 43, 52, 70), "loud_bright", param)
+#' y_bright <- predict_gpm(c(34, 43, 52, 70), "loud_bright", param, p = 2)
 #' y_loud <- predict_gpm(c(69, 73, 77, 85), "bright_loud", param)
+#' @export
 predict_gpm <- function(standards, task, param, p = 1) {
   if ("w_1" %in% names(param)) {
     w_1 <- param$w_1
@@ -66,10 +75,10 @@ predict_gpm <- function(standards, task, param, p = 1) {
     w <- NULL 
   }
   
-  gpm_wrapper(standard_intensity = standards,
+  gpm_multiple_p(standard_intensity = standards,
               alpha_std = param$alpha_b, alpha_tgt = param$alpha_l,
               beta_std = param$beta_b, beta_tgt = param$beta_l,
-              p = as.numeric(p),  # Ensure this is numeric
+              p = as.numeric(p), 
               w_1 = w_1, w_p = w_p, w = w,
               task = task,
               rho_std = param$rho_btol, rho_tgt = param$rho_lfromb)
@@ -77,15 +86,22 @@ predict_gpm <- function(standards, task, param, p = 1) {
 
 #' Simulate a magnitude production data set for both tasks and one or more
 #' production ratios
+#' 
+#' @description
+#' This function generates simulated magnitude production data by predicting responses 
+#' using the global psychophysics model and adding random noise.
 #'
 #' @param ntrials A number of trials per condition.
-#' @param cond A data frame with columns task, std, sigma, and p.
-#'        sigma: number representing the standard deviation for loudness and
-#'        brightness productions.
+#' @param cond A data frame with columns:
+#'        - task: factor with values "loud_bright" or "bright_loud"
+#'        - std: numeric values representing standard intensities
+#'        - sigma: standard deviation for adding noise to predictions
+#'        - p: production ratio values
 #' @param param A named vector of numbers representing the model parameters.
-#' @returns A data frame with the simulated magnitude productions for ntrials
-#' per condition.
+#' @returns A data frame with ntrials rows per condition, containing columns:
+#'          task, std, sigma, p, mu (predicted value), and tgt (noisy response).
 #' @examples
+#' Single production factor example 
 #' cond <- data.frame(
 #'                    task = rep(c("loud_bright", "bright_loud"), each = 6),
 #'                    std = c(25, 34, 43, 52, 61, 70,  # loud std
@@ -95,7 +111,26 @@ predict_gpm <- function(standards, task, param, p = 1) {
 #' )
 #' param <- create_param_set()
 #' simulate_gpm(20, cond, param)
-# TODO: Add example for more than one p
+#' 
+#' Multiple production factors example
+#' param <- create_param_set()
+#' 
+#' loud_standards <- c(25, 34, 43, 52, 61, 70)
+#' bright_standards <- c(69, 73, 77, 81, 85, 89)
+#' 
+#' cond_loud <- expand.grid(task = "loud_bright",
+#'                          std = loud_standards,
+#'                          p = c(1, 2, 3))
+#'                          
+#' cond_bright <- expand.grid(task = "bright_loud",
+#'                            std = bright_standards,
+#'                            p = c(1, 2, 3))
+#'                            
+#' cond_multi_p <- rbind(cond_loud, cond_bright)
+#' cond_multi_p$sigma <- ifelse(cond_multi_p$task == "bright_loud", 3, 3)
+#' 
+#' simulated_data <- simulate_gpm(200, cond_multi_p, param)
+#' @export
 simulate_gpm <- function(ntrials, cond, param) {
   cond$task <- factor(cond$task, levels = unique(cond$task))
   
