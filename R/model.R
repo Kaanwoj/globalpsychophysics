@@ -47,7 +47,8 @@ db_inv_spl <- function(db_l) {
 #' @export
 psi <- function(x, alpha, beta) {
   out <- alpha * x^beta
-  if (length(out) == 0) stop("Psi function results in 0. Change parameters.")
+  # TODO diese Abfrage ob alle PArameter da sind woanders
+  if (length(out) == 0) stop("Psi function results in NULL. Change parameters.")
   out
   }
 
@@ -62,7 +63,7 @@ psi <- function(x, alpha, beta) {
 #' @export
 psi_inv <- function(x, alpha, beta) {
   out <- (1 / alpha * x)^(1 / beta)
-  if (length(out) == 0) stop("Inverse psi function results in 0. Change parameters.")
+  if (length(out) == 0) stop("Inverse psi function results in NULL. Change parameters.")
   out
 }
 

@@ -75,13 +75,30 @@ predict_gpm <- function(standards, task, param, p = 1) {
     w <- NULL 
   }
   
+  # TODO Abfrage ob alle in param vorhanden
+  if(task == "bright_loud"){
+    rho_std <- param$rho_btol
+    rho_tgt <- param$rho_lfromb
+    alpha_std <- param$alpha_b
+    alpha_tgt <- param$alpha_l
+    beta_std <- param$beta_b
+    beta_tgt <- param$beta_l
+  }else{
+    rho_std <- param$rho_ltob
+    rho_tgt <- param$rho_bfroml
+    alpha_std <- param$alpha_l
+    alpha_tgt <- param$alpha_b
+    beta_std <- param$beta_l
+    beta_tgt <- param$beta_b
+  }
+  
   gpm_multiple_p(standard_intensity = standards,
-              alpha_std = param$alpha_b, alpha_tgt = param$alpha_l,
-              beta_std = param$beta_b, beta_tgt = param$beta_l,
+              alpha_std = alpha_std, alpha_tgt = alpha_tgt,
+              beta_std = beta_std, beta_tgt = beta_tgt,
               p = as.numeric(p), 
               w_1 = w_1, w_p = w_p, w = w,
               task = task,
-              rho_std = param$rho_btol, rho_tgt = param$rho_lfromb)
+              rho_std = rho_std, rho_tgt = rho_tgt)
 }
 
 #' Simulate a magnitude production data set for both tasks and one or more
