@@ -1,18 +1,20 @@
 #' @importFrom stats rbeta rlnorm rnorm runif
 #' @examples
-# TODO: add w_1 and w
 #' param <- create_param_set()
 #' param <- create_param_set(restriction = "role-independent")
 #' param <- create_param_set(restriction = "const")
 #' @export
-create_param_set <- function(n = 1, method = c("existing", "generate"),
-                             restriction = c("no", "role-independent", "const")) {
-  method <- method[1]
-  restriction <- restriction[1] # FIXME: is this how it should be dealt with?
+create_param_set <- function(n = 1, 
+                             method = "existing", 
+                             restriction = "no",
+                             calc_w_p = FALSE) {
+  # Match the argument with valid choices and get the first matching value
+  method <- match.arg(method, choices = c("existing", "generate"))
+  restriction <- match.arg(restriction, choices = c("no", "role-independent", "const"))
+  
   if (method == "existing") {
     out <- data.frame(alpha_b = 1, alpha_l = 15.48,
-                      beta_b = 0.4, beta_l = 0.26,
-                      w_p = 0.8)
+                      beta_b = 0.4, beta_l = 0.26)
     if (restriction == "no") {
       out$rho_btol <- 38.3
       out$rho_lfromb <- 20
@@ -20,22 +22,44 @@ create_param_set <- function(n = 1, method = c("existing", "generate"),
       out$rho_bfroml <- 71.8
     }
     if (restriction == "role-independent") {
-      # TODO ist das in weiteren Funktionen implementiert?
-      out$rho_bfroml <- out$rho_btol <- 78.2
-      out$rho_lfromb <- out$rho_ltob <- 51.4
+      out$rho_b <- 78.2
+      out$rho_l <- 51.4
     }
     if (restriction == "const") {
       out$const_bl <- -1.622
       out$const_lb <- 0.0803
     }
+    if(calc_w_p){
+      out$w_p <- 0.8
+    }else{
+      out$w <- 1.5
+      out$w_1 <- 1
+    }
   } else {
-    out <- data.frame(alpha_b = 1,
+    out <- data.frame(alpha_b = 1, 
                       alpha_l = rlnorm(n, 12, 3),
-                      beta_l = rbeta(n, 3, 6),
-                      beta_b = rbeta(n, 3, 6),
-                      w_p = rnorm(n, 1, .3),
-                      rho_btol = runif(n, 50, 90), rho_lfromb = runif(n, 0, 80),
-                      rho_ltob = runif(n, 0, 80), rho_bfroml = runif(n, 50, 90))
+                      beta_b = rbeta(n, 3, 6), 
+                      beta_l = rbeta(n, 3, 6))
+    if (restriction == "no") {
+      out$rho_btol <- runif(n, 50, 90)
+      out$rho_lfromb <- runif(n, 0, 80)
+      out$rho_ltob <- runif(n, 0, 80)
+      out$rho_bfroml <- runif(n, 50, 90)
+    }
+    if (restriction == "role-independent") {
+      out$rho_b <- runif(n, 50, 90)
+      out$rho_l <- runif(n, 0, 80)
+    }
+    if (restriction == "const") {
+      out$const_bl <- runif(n, 100, 180)
+      out$const_lb <- runif(, 0, 160)
+    }
+    if(calc_w_p){
+      out$w_p <- rnorm(n, 1, .3)
+    }else{
+      out$w <- rnorm(n, 1.5, .5)
+      out$w_1 <- rnorm(n, 1, .2)
+    }
   }
   out
 }
@@ -75,23 +99,40 @@ predict_gpm <- function(standards, task, param, p = 1) {
     w <- NULL 
   }
   
-  # TODO Abfrage ob alle in param vorhanden
-  if(task == "bright_loud"){
-    rho_std <- param$rho_btol
-    rho_tgt <- param$rho_lfromb
-    alpha_std <- param$alpha_b
-    alpha_tgt <- param$alpha_l
-    beta_std <- param$beta_b
-    beta_tgt <- param$beta_l
+  if((is.null(param$rho_bfroml) | is.null(param$rho_lfromb) | is.null(param$rho_ltob) | is.null(param$rho_btol))){
+    if(task == "bright_loud"){
+      rho_std <- param$rho_b
+      rho_tgt <- param$rho_l
+      alpha_std <- param$alpha_b
+      alpha_tgt <- param$alpha_l
+      beta_std <- param$beta_b
+      beta_tgt <- param$beta_l
+    }else{
+      rho_std <- param$rho_l
+      rho_tgt <- param$rho_b
+      alpha_std <- param$alpha_l
+      alpha_tgt <- param$alpha_b
+      beta_std <- param$beta_l
+      beta_tgt <- param$beta_b
+    }
   }else{
-    rho_std <- param$rho_ltob
-    rho_tgt <- param$rho_bfroml
-    alpha_std <- param$alpha_l
-    alpha_tgt <- param$alpha_b
-    beta_std <- param$beta_l
-    beta_tgt <- param$beta_b
+    if(task == "bright_loud"){
+      rho_std <- param$rho_btol
+      rho_tgt <- param$rho_lfromb
+      alpha_std <- param$alpha_b
+      alpha_tgt <- param$alpha_l
+      beta_std <- param$beta_b
+      beta_tgt <- param$beta_l
+    }else{
+      rho_std <- param$rho_ltob
+      rho_tgt <- param$rho_bfroml
+      alpha_std <- param$alpha_l
+      alpha_tgt <- param$alpha_b
+      beta_std <- param$beta_l
+      beta_tgt <- param$beta_b
+    }
   }
-  
+
   gpm_multiple_p(standard_intensity = standards,
               alpha_std = alpha_std, alpha_tgt = alpha_tgt,
               beta_std = beta_std, beta_tgt = beta_tgt,
@@ -114,7 +155,11 @@ predict_gpm <- function(standards, task, param, p = 1) {
 #'        - std: numeric values representing standard intensities
 #'        - sigma: standard deviation for adding noise to predictions
 #'        - p: production ratio values
-#' @param param A named vector of numbers representing the model parameters.
+#' @param param A named vector of numbers representing the model parameters:
+#'                alpha_b, alpha_l, beta_b, beta_l,
+#'                w_p or w_1 and w (if w_p should be calculated) 
+#'                rho_btol, rho_lfromb, rho_ltob, rho_bfroml if role-dependece 
+#'                or rho_b and rho_l if role-independece is assumed
 #' @returns A data frame with ntrials rows per condition, containing columns:
 #'          task, std, sigma, p, mu (predicted value), and tgt (noisy response).
 #' @examples

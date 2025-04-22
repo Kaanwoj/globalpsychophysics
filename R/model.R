@@ -46,10 +46,7 @@ db_inv_spl <- function(db_l) {
 #' brightness or loudness)
 #' @export
 psi <- function(x, alpha, beta) {
-  out <- alpha * x^beta
-  # TODO diese Abfrage ob alle PArameter da sind woanders
-  if (length(out) == 0) stop("Psi function results in NULL. Change parameters.")
-  out
+  return(alpha * x^beta)
   }
 
 #' Inverse of psychophysical function phi(x) = alpha * x^beta
@@ -62,9 +59,7 @@ psi <- function(x, alpha, beta) {
 #' luminance in cd/m2 or sound pressure in Pascal).
 #' @export
 psi_inv <- function(x, alpha, beta) {
-  out <- (1 / alpha * x)^(1 / beta)
-  if (length(out) == 0) stop("Inverse psi function results in NULL. Change parameters.")
-  out
+  return((1 / alpha * x)^(1 / beta))
 }
 
 #' Cognitive weighting function W(p)
@@ -124,9 +119,13 @@ gpm <- function(standard_intensity,
     db_inv_tgt <- db_inv_lambert
     db_tgt <- db_lambert
   }
-  if (!(is.null(rho_std) & is.null(rho_tgt))) {
+  if(!(is.null(rho_std) & is.null(rho_tgt))) {
     const <- const_fun(w_p, rho_std, db_inv_std, alpha_std, beta_std,
                            rho_tgt, db_inv_tgt, alpha_tgt, beta_tgt)
+  }else if(is.null(rho_std)){
+    stop(glue::glue("The internal reference of the standard stimuli in {task} is NULL. Please provide a valid input for this parameter"))
+  }else{
+    stop(glue::glue("The internal reference of the target stimuli in {task} is NULL. Please provide a valid input for this parameter"))
   }
   (w_p * psi(db_inv_std(standard_intensity), alpha_std, beta_std) - const) |>
     psi_inv(alpha_tgt, beta_tgt) |>
