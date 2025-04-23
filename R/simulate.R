@@ -230,11 +230,27 @@ simulate_gpm <- function(ntrials, cond, param) {
     pred_df <- predictions[[i]]
     mu_values[group_rows] <- pred_df$mu
   }
-  
   cond$mu <- mu_values
   
   # Create output data frame with replicated rows for trials
   out <- cond[rep(seq_len(nrow(cond)), each = ntrials), ]
+  
+  # Check for invalid mu values
+  invalid_mu <- is.na(out$mu) | is.infinite(out$mu)
+  if(any(invalid_mu)){
+    warning(paste("Invalid mu values detected for", sum(invalid_mu), 
+                  "rows. Check your predict_gpm function outputs."))
+    out$mu[invalid_mu] <- 50
+  }
+  
+  # Check for invalid sigma values
+  invalid_sigma <- is.na(out$sigma) | out$sigma <= 0
+  if(any(invalid_sigma)){
+    warning(paste("Invalid sigma values detected for", sum(invalid_sigma), 
+                  "rows. Using default value."))
+    out$sigma[invalid_sigma] <- 1  
+  }
+  
   out$tgt <- rnorm(nrow(out), mean = out$mu, sd = out$sigma)
   row.names(out) <- NULL
   out
