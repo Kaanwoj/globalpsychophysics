@@ -5,22 +5,27 @@ functions {
   real db_spl(real x_l) {return 20 * log10(x_l / (2 * (10 ^ -5)));}
   real db_inv_lambert(real db_b) {return (10 ^ (db_b / 10)) * (10 ^ -6) / pi();}
   real db_inv_spl(real db_l) {return (10 ^ (db_l / 20)) * 2 * (10 ^ -5);}
+  real weigh_fun(real p, real, w_1, real w) {
+      return w_1 * pow(p, w);
+  };
   real loud_to_bright(real x_loud, real alpha_l, real alpha_b, real beta_l,
-                      real beta_b, real w_1, real rho_ltob, real rho_bfroml) {
+                      real beta_b, real rho_ltob, real rho_bfroml,
+                      real w_1, real p, real w) {
     return db_lambert(
       inv(alpha_b) *
-      pow(w_1 * alpha_l * pow(db_inv_spl(x_loud), beta_l) -
-            w_1 * alpha_l * pow(db_inv_spl(rho_ltob), beta_l) +
+      pow(weigh_fun(p, w_1, w) * alpha_l * pow(db_inv_spl(x_loud), beta_l) -
+            weigh_fun(p, w_1, w) * alpha_l * pow(db_inv_spl(rho_ltob), beta_l) +
             alpha_b * pow(db_inv_lambert(rho_bfroml), beta_b),
           inv(beta_b))
     );
   }
   real bright_to_loud(real x_bright, real alpha_l, real alpha_b, real beta_l,
-                      real beta_b, real w_1, real rho_btol, real rho_lfromb) {
+                      real beta_b, real rho_btol, real rho_lfromb,
+                      real w_1, real p, real w) {
     return db_spl(
        inv(alpha_l) *
-         pow(w_1 * alpha_b * pow(db_inv_lambert(x_bright), beta_b) -
-               w_1 * alpha_b * pow(db_inv_lambert(rho_btol), beta_b) +
+         pow(weigh_fun(p, w_1, w) * alpha_b * pow(db_inv_lambert(x_bright), beta_b) -
+               weigh_fun(p, w_1, w) * alpha_b * pow(db_inv_lambert(rho_btol), beta_b) +
                alpha_l * pow(db_inv_lambert(rho_lfromb), beta_l),
              inv(beta_l))
     );
@@ -47,6 +52,7 @@ parameters {
   real<lower=0> beta_l;
   real<lower=0> beta_b;
   real<lower=0> w_1;
+  real<lower=0> w;
   real          rho_ltob;
   real          rho_bfroml;
   real          rho_btol;
@@ -56,17 +62,18 @@ transformed parameters {
   vector[nx_lb] mu_lb;
   vector[nx_bl] mu_bl;
   for (n in 1:nx_lb)
-    mu_lb[n] = loud_to_bright(x_lb[n], alpha_l, alpha_b, beta_l, beta_b, w_1,
-                              rho_ltob, rho_bfroml);
+    mu_lb[n] = loud_to_bright(x_lb[n], alpha_l, alpha_b, beta_l, beta_b,
+                              rho_ltob, rho_bfroml, w_1, p, w);
   for (n in 1:nx_bl)
-    mu_bl[n] = bright_to_loud(x_bl[n], alpha_l, alpha_b, beta_l, beta_b, w_1,
-                              rho_btol, rho_lfromb);
+    mu_bl[n] = bright_to_loud(x_bl[n], alpha_l, alpha_b, beta_l, beta_b,
+                              rho_btol, rho_lfromb, w_1, p, w);
 }
 model {
   alpha_l ~ normal(12, 3); #(0.7, 0.1);
   beta_l ~ beta(3, 6);
   beta_b ~ beta(3, 6);
-  w_1 ~ normal(1, .3);
+  w_1 ~ normal(1, .3); // change prior
+  w ~ normal(1, .3);   // change prior
   rho_ltob ~ normal(60, 20);
   rho_bfroml ~ normal(60, 20);
   rho_btol ~ normal(60, 20);

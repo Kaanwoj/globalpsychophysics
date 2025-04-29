@@ -62,12 +62,12 @@ make_datlist <- function(data, ntrials) {
 #' @param ntrials number of trials per standard.
 #' @returns
 #' @examples
-#dat <- matching
-#datlist <- make_datlist(data = dat[dat$id == 2, ], 48)
-#m <- estimate(data = dat[dat$id == 2, ], 48, references = "constant")
-#print(m, pars = c("alpha_l", "beta_l", "beta_b", "w_1", "const_lb",
-#                  "const_bl"), probs = c(.025, .975))
-
+#' data(matching)
+#' datlist <- make_datlist(data = matching[matching$id == 2, ], 48)
+#' m <- estimate(data = matching[matching$id == 2, ], 48, references = "constant")
+#' print(m, pars = c("alpha_l", "beta_l", "beta_b", "w_1", "const_lb",
+#'                   "const_bl"), probs = c(.025, .975))
+#' 
 estimate <- function(data, ntrials,
                      references = c("dependent", "independent", "constant")) {
   # TODO: args for rstan::stan()
@@ -76,11 +76,11 @@ estimate <- function(data, ntrials,
 
   if (references == "constant") {
     print("fitting model with constant sum of internal references")
-    model <- "R/stan/gpm_const.stan"
+    model <- "R/stan/gpm_p1_const.stan"
     # FIXME: no hard coded path
   } else {
     print("fitting model with role-dependent internal references")
-    model <- "R/stan/gpm.stan"
+    model <- "R/stan/gpm_p1.stan"
     datlist$alpha_b <- 1
   }
   stan(file = model, data = datlist, chains = 4, warmup = 1000, iter = 2000)
