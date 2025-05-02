@@ -32,9 +32,17 @@ make_datlist <- function(data, ntrials) {
     }
   }
 
-  dat_lb <- data |> subset(type == "loud_bright")
+  if (!"task" %in% names(data)) {
+    if ("type" %in% names(data)) {
+      data$task <- data$type
+    } else {
+      stop("column 'task' or 'type' is missing in data")
+    }
+  }
+
+  dat_lb <- data |> subset(task == "loud_bright")
   std_lb <- unique(dat_lb$std)
-  dat_bl <- data |> subset(type == "bright_loud")
+  dat_bl <- data |> subset(task == "bright_loud")
   std_bl <- unique(dat_bl$std)
 
   # TODO: option for sigma to be a free parameter

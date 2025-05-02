@@ -29,11 +29,11 @@ create_param_set <- function(n = 1,
       out$const_bl <- -1.622
       out$const_lb <- 0.0803
     }
-    if(calc_w_p){
+    if (calc_w_p) {
       out$w_p <- 0.8
-    }else{
-      out$w <- 1.5
-      out$w_1 <- 1
+    } else {
+      out$w <- 0.6
+      out$w_1 <- 0.8
     }
   } else {
     out <- data.frame(alpha_b = 1, 
@@ -57,8 +57,8 @@ create_param_set <- function(n = 1,
     if(calc_w_p){
       out$w_p <- rnorm(n, 1, .3)
     }else{
-      out$w <- rnorm(n, 1.5, .5)
-      out$w_1 <- rnorm(n, 1, .2)
+      out$w <- rnorm(n, 0.6, .05)
+      out$w_1 <- rnorm(n, 0.8, .1)
     }
   }
   out

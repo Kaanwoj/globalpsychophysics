@@ -39,7 +39,7 @@ data {
   int<lower=1>        nx_bl;
   vector<lower=1>[nx_lb]      x_lb;
   vector<lower=1>[nx_bl]      x_bl;
-  int<lower=1>       x_lb_idx[ntotal_lb];
+  int<lower=1>       x_lb_idx[ntotal_lb]; // TODO use array[n] int bla;
   int<lower=1>       x_bl_idx[ntotal_bl];
   vector<lower=0>[ntotal_lb]      y_lb;
   vector<lower=0>[ntotal_bl]      y_bl;
