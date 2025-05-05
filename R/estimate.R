@@ -47,20 +47,41 @@ make_datlist <- function(data, ntrials) {
 
   # TODO: option for sigma to be a free parameter
 
-  list(ntotal_lb = nrow(dat_lb),
-       ntotal_bl = nrow(dat_bl),
-       ntrials = ntrials,
-       nx_lb = std_lb |> length(),
-       nx_bl = std_bl |> length(),
-       x_lb = std_lb,
-       x_bl = std_bl,
-       x_lb_idx = as.numeric(as.factor(dat_lb$std)),
-       x_bl_idx = as.numeric(as.factor(dat_bl$std)),
-       y_lb = dat_lb$tgt,
-       y_bl = dat_bl$tgt,
-       sig_lb = aggregate(tgt ~ std, dat_lb, sd)$tgt,
-       sig_bl = aggregate(tgt ~ std, dat_bl, sd)$tgt
+  datlist <- list(
+    ntotal = nrow(data),
+    ntotal_lb = nrow(dat_lb),
+    ntotal_bl = nrow(dat_bl),
+    np = length(unique(data$p)),
+    p = unique(data$p),
+    nstd_lb = std_lb |> length(),
+    nstd_bl = std_bl |> length(),
+    std_lb = std_lb,
+    std_bl = std_bl,
+  # std_lb_idx = as.numeric(as.factor(dat_lb$std)),
+  # std_bl_idx = as.numeric(as.factor(dat_bl$std)),
+    std_p_lb = as.numeric(interaction(dat_lb$p, dat_lb$std,
+                                     lex.order = TRUE)),
+    std_p_bl = as.numeric(interaction(dat_bl$p, dat_bl$std,
+                                     lex.order = TRUE)),
+  # tgt_lb = dat_lb$tgt,
+  # tgt_bl = dat_bl$tgt,
+    tgt = data$tgt,
+  # sig_lb = aggregate(tgt ~ std, dat_lb, sd)$tgt,
+  # sig_bl = aggregate(tgt ~ std, dat_bl, sd)$tgt,
+    sig = aggregate(tgt ~ std + p + task, data, sd)$tgt
   )
+  datlist$ncond_lb <- length(datlist$std_p_lb)
+  datlist$ncond_bl <- length(datlist$std_p_bl)
+
+ #datlist <- list(ntotal = nrow(data),
+ #  task_idx = as.numeric(data$task),
+ #  task_p_std = as.numeric(interaction(data$task, data$p, data$std,
+ #                                      drop = TRUE, lex.order = TRUE)),
+ #  tgt = data$tgt,
+ #  sig = aggregate(tgt ~ std + p + task, data, sd)$tgt
+ #)
+ #datlist$ncond <- length(datlist$task_p_std)
+
 }
 
 #' Estimate parameters of global psychophysics model
@@ -89,7 +110,6 @@ estimate <- function(data, ntrials,
   } else {
     print("fitting model with role-dependent internal references")
     model <- "R/stan/gpm_p1.stan"
-    datlist$alpha_b <- 1
   }
   stan(file = model, data = datlist, chains = 4, warmup = 1000, iter = 2000)
 }
