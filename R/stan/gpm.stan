@@ -71,8 +71,8 @@ parameters {
 transformed parameters {
   matrix[nstd_lb, np] mu_lb;
   matrix[nstd_bl, np] mu_bl;
-  for (i in 1:np) {
-    for (j in 1:nstd_lb)
+  for (i in 1:np) {  // what if p and std is not fully crossed?
+    for (j in 1:nstd_lb)  // column-major order
       mu_lb[j, i] = loud_to_bright(std_lb[j], alpha_l, alpha_b, beta_l, beta_b,
                                    rho_ltob, rho_bfroml, omega1, p[i], omega);
     for (j in 1:nstd_bl)

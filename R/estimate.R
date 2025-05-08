@@ -51,37 +51,31 @@ make_datlist <- function(data, ntrials) {
     ntotal = nrow(data),
     ntotal_lb = nrow(dat_lb),
     ntotal_bl = nrow(dat_bl),
-    np = length(unique(data$p)),
-    p = unique(data$p),
     nstd_lb = std_lb |> length(),
     nstd_bl = std_bl |> length(),
     std_lb = std_lb,
-    std_bl = std_bl,
-  # std_lb_idx = as.numeric(as.factor(dat_lb$std)),
-  # std_bl_idx = as.numeric(as.factor(dat_bl$std)),
-    std_p_lb = as.numeric(interaction(dat_lb$p, dat_lb$std,
-                                     lex.order = TRUE)),
-    std_p_bl = as.numeric(interaction(dat_bl$p, dat_bl$std,
-                                     lex.order = TRUE)),
-  # tgt_lb = dat_lb$tgt,
-  # tgt_bl = dat_bl$tgt,
-    tgt = data$tgt,
-  # sig_lb = aggregate(tgt ~ std, dat_lb, sd)$tgt,
-  # sig_bl = aggregate(tgt ~ std, dat_bl, sd)$tgt,
-    sig = aggregate(tgt ~ std + p + task, data, sd)$tgt
+    std_bl = std_bl
   )
-  datlist$ncond_lb <- length(datlist$std_p_lb)
-  datlist$ncond_bl <- length(datlist$std_p_bl)
 
- #datlist <- list(ntotal = nrow(data),
- #  task_idx = as.numeric(data$task),
- #  task_p_std = as.numeric(interaction(data$task, data$p, data$std,
- #                                      drop = TRUE, lex.order = TRUE)),
- #  tgt = data$tgt,
- #  sig = aggregate(tgt ~ std + p + task, data, sd)$tgt
- #)
- #datlist$ncond <- length(datlist$task_p_std)
+  if ("p" %in% names(data)) {   # multiple production factors
+    datlist$np <- length(unique(data$p))
+    datlist$p <- unique(data$p)
+    datlist$std_p_lb <- as.numeric(interaction(dat_lb$p, dat_lb$std,
+                                     lex.order = TRUE))
+    datlist$std_p_bl <- as.numeric(interaction(dat_bl$p, dat_bl$std,
+                                     lex.order = TRUE))
+    datlist$tgt <- data$tgt
+    datlist$sig <- aggregate(tgt ~ std + p + task, data, sd)$tgt
+  } else {                      # matching
+    datlist$std_lb_idx <- as.numeric(as.factor(dat_lb$std))
+    datlist$std_bl_idx <- as.numeric(as.factor(dat_bl$std))
+    datlist$tgt_lb <- dat_lb$tgt
+    datlist$tgt_bl <- dat_bl$tgt
+    datlist$sig_lb <- aggregate(tgt ~ std, dat_lb, sd)$tgt
+    datlist$sig_bl <- aggregate(tgt ~ std, dat_bl, sd)$tgt
+  }
 
+  datlist
 }
 
 #' Estimate parameters of global psychophysics model
