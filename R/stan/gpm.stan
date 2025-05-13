@@ -47,12 +47,14 @@ data {
 //array[ntotal] int cond_bl;
   array[ntotal_lb] int std_p_lb;
   array[ntotal_bl] int std_p_bl;
-//vector<lower=0>[ntotal] tgt_lb;
-//vector<lower=0>[ntotal] tgt_bl;
+  int<lower=1> nstd_p_lb;
+  int<lower=1> nstd_p_bl;
+//vector<lower=0>[ntotal_lb] tgt_lb;
+//vector<lower=0>[ntotal_bl] tgt_bl;
   vector<lower=0>[ntotal] tgt;
-  vector<lower=0>[ntotal] sig;
-//vector<lower=0>[nstd_lb] sig_lb;
-//vector<lower=0>[nstd_bl] sig_bl;
+//vector<lower=0>[ntotal] sig;
+  vector<lower=0>[nstd_p_lb] sig_lb;
+  vector<lower=0>[nstd_p_bl] sig_bl;
 }
 transformed data {
   int<lower=1, upper=1> alpha_b = 1;
@@ -69,16 +71,18 @@ parameters {
   real<lower=0> rho_lfromb;
 }
 transformed parameters {
-  matrix[nstd_lb, np] mu_lb;
-  matrix[nstd_bl, np] mu_bl;
+  matrix[nstd_lb, np] mat_lb;
+  matrix[nstd_bl, np] mat_bl;
   for (i in 1:np) {  // what if p and std is not fully crossed?
     for (j in 1:nstd_lb)  // column-major order
-      mu_lb[j, i] = loud_to_bright(std_lb[j], alpha_l, alpha_b, beta_l, beta_b,
+      mat_lb[j, i] = loud_to_bright(std_lb[j], alpha_l, alpha_b, beta_l, beta_b,
                                    rho_ltob, rho_bfroml, omega1, p[i], omega);
     for (j in 1:nstd_bl)
-      mu_bl[j, i] = bright_to_loud(std_bl[j], alpha_l, alpha_b, beta_l, beta_b,
+      mat_bl[j, i] = bright_to_loud(std_bl[j], alpha_l, alpha_b, beta_l, beta_b,
                                 rho_btol, rho_lfromb, omega1, p[i], omega);
   };
+  vector[nstd_p_lb] mu_lb = to_vector(mat_lb);
+  vector[nstd_p_bl] mu_bl = to_vector(mat_bl);
 }
 model {
   alpha_l ~ normal(30, 20); #(0.7, 0.1);
@@ -90,11 +94,12 @@ model {
   rho_bfroml ~ normal(70, 20);
   rho_btol ~ normal(70, 20);
   rho_lfromb ~ normal(50, 20);
-//target += normal_lpdf(tgt_lb | to_vector(mu_lb)[std_p_lb], sig_lb[std_p_lb]);
-//target += normal_lpdf(tgt_bl | to_vector(mu_bl)[std_p_bl], sig_bl[std_p_bl]);
+//target += normal_lpdf(tgt_lb | mu_lb[std_p_lb], sig_lb[std_p_lb]);
+//target += normal_lpdf(tgt_bl | mu_bl[std_p_bl], sig_bl[std_p_bl]);
 
-  tgt ~ normal([to_vector(mu_lb)[std_p_bl], to_vector(mu_bl)[std_p_bl]],
-               [sig_lb[std_p_bl], sig_bl[std_p_bl]]);
+  tgt ~ normal(append_row(to_vector(mu_lb)[std_p_bl],
+                          to_vector(mu_bl)[std_p_bl]),
+               append_row(sig_lb[std_p_bl], sig_bl[std_p_bl]));
   
 }
 generated quantities {

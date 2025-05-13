@@ -61,11 +61,17 @@ make_datlist <- function(data, ntrials) {
     datlist$np <- length(unique(data$p))
     datlist$p <- unique(data$p)
     datlist$std_p_lb <- as.numeric(interaction(dat_lb$p, dat_lb$std,
-                                     lex.order = TRUE))
+                                               lex.order = TRUE))
     datlist$std_p_bl <- as.numeric(interaction(dat_bl$p, dat_bl$std,
-                                     lex.order = TRUE))
+                                               lex.order = TRUE))
+    datlist$nstd_p_lb <- length(datlist$std_bl) * datlist$np
+    datlist$nstd_p_bl <- length(datlist$std_lb) * datlist$np
+   #datlist$tgt_lb <- dat_lb$tgt
+   #datlist$tgt_bl <- dat_bl$tgt
     datlist$tgt <- data$tgt
-    datlist$sig <- aggregate(tgt ~ std + p + task, data, sd)$tgt
+    datlist$sig_lb <- aggregate(tgt ~ std + p, dat_lb, sd)$tgt
+    datlist$sig_bl <- aggregate(tgt ~ std + p, dat_bl, sd)$tgt
+   #datlist$sig <- aggregate(tgt ~ std + p + task, data, sd)$tgt
   } else {                      # matching
     datlist$std_lb_idx <- as.numeric(as.factor(dat_lb$std))
     datlist$std_bl_idx <- as.numeric(as.factor(dat_bl$std))
@@ -93,17 +99,25 @@ make_datlist <- function(data, ntrials) {
 #' 
 estimate <- function(data, ntrials,
                      references = c("dependent", "independent", "constant")) {
+  references <- match.arg(references)
   # TODO: args for rstan::stan()
-  
+
   datlist <- make_datlist(data, ntrials)
 
-  if (references == "constant") {
-    print("fitting model with constant sum of internal references")
-    model <- "R/stan/gpm_p1_const.stan"
-    # FIXME: no hard coded path
-  } else {
-    print("fitting model with role-dependent internal references")
-    model <- "R/stan/gpm_p1.stan"
+  if ("p" %in% names(datlist)) {    # multiple p model
+    print("fitting model with multiple production factors and role-dependent
+      internal references")
+      # FIXME: hard coded path
+    model <- "R/stan/gpm.stan"
+  } else {                          # p=1 models
+    if (references == "constant") {
+      print("fitting model with constant sum of internal references")
+      model <- "R/stan/gpm_p1_const.stan"
+    } else {
+      print("fitting model with role-dependent internal references")
+      model <- "R/stan/gpm_p1.stan"
+    }
   }
+
   stan(file = model, data = datlist, chains = 4, warmup = 1000, iter = 2000)
 }

@@ -11,7 +11,7 @@ create_param_set <- function(n = 1,
   # Match the argument with valid choices and get the first matching value
   method <- match.arg(method, choices = c("existing", "generate"))
   restriction <- match.arg(restriction, choices = c("no", "role-independent", "const"))
-  
+
   if (method == "existing") {
     out <- data.frame(alpha_b = 1, alpha_l = 15.48,
                       beta_b = 0.4, beta_l = 0.26)
@@ -36,9 +36,9 @@ create_param_set <- function(n = 1,
       out$w_1 <- 0.8
     }
   } else {
-    out <- data.frame(alpha_b = 1, 
+    out <- data.frame(alpha_b = 1,
                       alpha_l = rlnorm(n, 12, 3),
-                      beta_b = rbeta(n, 3, 6), 
+                      beta_b = rbeta(n, 3, 6),
                       beta_l = rbeta(n, 3, 6))
     if (restriction == "no") {
       out$rho_btol <- runif(n, 50, 90)
@@ -54,9 +54,9 @@ create_param_set <- function(n = 1,
       out$const_bl <- runif(n, 100, 180)
       out$const_lb <- runif(, 0, 160)
     }
-    if(calc_w_p){
+    if (calc_w_p) {
       out$w_p <- rnorm(n, 1, .3)
-    }else{
+    } else {
       out$w <- rnorm(n, 0.6, .05)
       out$w_1 <- rnorm(n, 0.8, .1)
     }
