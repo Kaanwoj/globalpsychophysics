@@ -61,8 +61,8 @@ transformed data {
 }
 parameters {
   real<lower=0> alpha_l;
-  real<lower=0> beta_l;
-  real<lower=0> beta_b;
+  real<lower=0, upper=1> beta_l;
+  real<lower=0, upper=1> beta_b;
   real<lower=0> omega1;
   real<lower=0> omega;
   real<lower=0> rho_ltob;
@@ -71,29 +71,29 @@ parameters {
   real<lower=0> rho_lfromb;
 }
 transformed parameters {
-  matrix[nstd_lb, np] mat_lb;
-  matrix[nstd_bl, np] mat_bl;
+  matrix[nstd_lb, np] mu_lb;
+  matrix[nstd_bl, np] mu_bl;
   for (i in 1:np) {  // what if p and std is not fully crossed?
     for (j in 1:nstd_lb)  // column-major order
-      mat_lb[j, i] = loud_to_bright(std_lb[j], alpha_l, alpha_b, beta_l, beta_b,
+      mu_lb[j, i] = loud_to_bright(std_lb[j], alpha_l, alpha_b, beta_l, beta_b,
                                    rho_ltob, rho_bfroml, omega1, p[i], omega);
     for (j in 1:nstd_bl)
-      mat_bl[j, i] = bright_to_loud(std_bl[j], alpha_l, alpha_b, beta_l, beta_b,
+      mu_bl[j, i] = bright_to_loud(std_bl[j], alpha_l, alpha_b, beta_l, beta_b,
                                 rho_btol, rho_lfromb, omega1, p[i], omega);
   };
-  vector[nstd_p_lb] mu_lb = to_vector(mat_lb);
-  vector[nstd_p_bl] mu_bl = to_vector(mat_bl);
+//vector[nstd_p_lb] mu_lb = to_vector(mat_lb);
+//vector[nstd_p_bl] mu_bl = to_vector(mat_bl);
 }
 model {
-  alpha_l ~ normal(30, 20); #(0.7, 0.1);
-  beta_l ~ beta(3, 6);
-  beta_b ~ beta(3, 6);
-  omega1 ~ normal(1, .3);
-  omega ~ normal(0.6, .5);   // truncated normal
-  rho_ltob ~ normal(50, 20);
-  rho_bfroml ~ normal(70, 20);
-  rho_btol ~ normal(70, 20);
-  rho_lfromb ~ normal(50, 20);
+  alpha_l ~ normal(40, 3); #(0.7, 0.1);
+  beta_l ~ beta(9, 5);
+  beta_b ~ beta(9, 5);
+  omega1 ~ lognormal(0, .1);
+  omega ~ lognormal(0, .2);   // truncated normal
+  rho_ltob ~ normal(50, 3);
+  rho_bfroml ~ normal(70, 3);
+  rho_btol ~ normal(70, 3);
+  rho_lfromb ~ normal(50, 3);
 //target += normal_lpdf(tgt_lb | mu_lb[std_p_lb], sig_lb[std_p_lb]);
 //target += normal_lpdf(tgt_bl | mu_bl[std_p_bl], sig_bl[std_p_bl]);
 

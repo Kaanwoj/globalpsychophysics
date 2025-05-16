@@ -135,7 +135,7 @@ gpm <- function(standard_intensity,
 
 #' Calculate global psychophysics model prediction 
 #'
-#' @description 
+#' @description
 #' This function extends the global psychophysics model function (gpm) by 
 #' allowing calculation of model predictions for a specific production ratio 
 #' (p). It handles the weighting calculation internally and provides appropriate 
