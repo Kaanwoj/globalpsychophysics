@@ -65,10 +65,10 @@ parameters {
   real<lower=0, upper=1> beta_b;
   real<lower=0> omega1;
   real<lower=0> omega;
-  real<lower=0> rho_ltob;
-  real<lower=0> rho_bfroml;
-  real<lower=0> rho_btol;
-  real<lower=0> rho_lfromb;
+  real rho_ltob;
+  real rho_bfroml;
+  real rho_btol;
+  real rho_lfromb;
 }
 transformed parameters {
   matrix[nstd_lb, np] mu_lb;
@@ -86,8 +86,8 @@ transformed parameters {
 }
 model {
   alpha_l ~ normal(40, 3); #(0.7, 0.1);
-  beta_l ~ beta(9, 5);
-  beta_b ~ beta(9, 5);
+  beta_l ~ beta(3, 6);
+  beta_b ~ beta(3, 6);
   omega1 ~ lognormal(0, .1);
   omega ~ lognormal(0, .2);   // truncated normal
   rho_ltob ~ normal(50, 3);
@@ -97,14 +97,17 @@ model {
 //target += normal_lpdf(tgt_lb | mu_lb[std_p_lb], sig_lb[std_p_lb]);
 //target += normal_lpdf(tgt_bl | mu_bl[std_p_bl], sig_bl[std_p_bl]);
 
-  tgt ~ normal(append_row(to_vector(mu_lb)[std_p_bl],
+  tgt ~ normal(append_row(to_vector(mu_lb)[std_p_lb],
                           to_vector(mu_bl)[std_p_bl]),
-               append_row(sig_lb[std_p_bl], sig_bl[std_p_bl]));
+               append_row(sig_lb[std_p_lb], sig_bl[std_p_bl]));
   
 }
 generated quantities {
-  array[ntotal_lb] real tgt_lb_pred = normal_rng(to_vector(mu_lb)[std_p_lb],
-                                                 sig_lb[std_p_lb]);
-  array[ntotal_bl] real tgt_bl_pred = normal_rng(to_vector(mu_bl)[std_p_bl],
-                                                 sig_bl[std_p_bl]);
+array[ntotal] real tgt_pred = normal_rng(
+  append_row(to_vector(mu_lb)[std_p_lb], to_vector(mu_bl)[std_p_bl]),
+  append_row(sig_lb[std_p_lb], sig_bl[std_p_bl]));
+//array[ntotal_lb] real tgt_lb_pred = normal_rng(to_vector(mu_lb)[std_p_lb],
+//                                               sig_lb[std_p_lb]);
+//array[ntotal_bl] real tgt_bl_pred = normal_rng(to_vector(mu_bl)[std_p_bl],
+//                                               sig_bl[std_p_bl]);
 }

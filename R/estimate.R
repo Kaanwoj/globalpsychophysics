@@ -20,7 +20,14 @@ make_datlist <- function(data, ntrials) {
       stop("column 'standard', 'standard_db' or 'std' is missing in data")
     }
   }
-
+  
+  # sort by p and then by std -------------------------------------------------
+  if ("p" %in% names(data)) {   # multiple production factors
+    data <- sort_by(data, ~ p + std)
+  } else {
+    data <- sort_by(data, ~ std)
+  }
+  
   # check match ---------------------------------------------------------------
   if (!"tgt" %in% names(data)) {
     if ("match_db" %in% names(data)) {
@@ -32,6 +39,7 @@ make_datlist <- function(data, ntrials) {
     }
   }
 
+  # check task ----------------------------------------------------------------
   if (!"task" %in% names(data)) {
     if ("type" %in% names(data)) {
       data$task <- data$type
@@ -40,6 +48,7 @@ make_datlist <- function(data, ntrials) {
     }
   }
 
+  # split by task -------------------------------------------------------------
   dat_lb <- data |> subset(task == "loud_bright")
   std_lb <- unique(dat_lb$std)
   dat_bl <- data |> subset(task == "bright_loud")
@@ -86,8 +95,9 @@ make_datlist <- function(data, ntrials) {
 
 #' Estimate parameters of global psychophysics model
 #'
-#' @param data A data frame containing columns standard and match in dB, and
-#' task direction (bright_loud or loud_bright).
+#' @param data A data frame containing the standard and target intensity in dB,
+#' and task direction (bright_loud or loud_bright). Must be sorted loud_bright
+#' first and then bright_loud.
 #' @param ntrials number of trials per standard.
 #' @returns
 #' @examples
@@ -119,5 +129,6 @@ estimate <- function(data, ntrials,
     }
   }
 
-  stan(file = model, data = datlist, chains = 4, warmup = 1000, iter = 2000)
+  stan(file = model, data = datlist, chains = 4, warmup = 1000, iter = 10000,
+       control = list(max_treedepth = 15))
 }

@@ -22,6 +22,7 @@ functions {
   }
 }
 data {
+  int<lower=1>    ntotal;
   int<lower=1>    ntotal_lb;
   int<lower=1>    ntotal_bl;
   int<lower=1>        nstd_lb;
@@ -30,15 +31,16 @@ data {
   vector<lower=1>[nstd_bl]      std_bl;
   int<lower=1>       std_lb_idx[ntotal_lb];
   int<lower=1>       std_bl_idx[ntotal_bl];
-  vector<lower=0>[ntotal_lb]      tgt_lb;
-  vector<lower=0>[ntotal_bl]      tgt_bl;
+//vector<lower=0>[ntotal_lb]      tgt_lb;
+//vector<lower=0>[ntotal_bl]      tgt_bl;
+  vector<lower=0>[ntotal] tgt;
   vector<lower=0>[nstd_lb] sig_lb;
   vector<lower=0>[nstd_bl] sig_bl;
 }
 parameters {
   real<lower=0> alpha_l;
-  real<lower=0> beta_l;
-  real<lower=0> beta_b;
+  real<lower=0, upper=1> beta_l;
+  real<lower=0, upper=1> beta_b;
   real<lower=0> w_1;
   real          const_lb;
   real          const_bl;
@@ -58,10 +60,21 @@ model {
   w_1 ~ normal(1, .3);
   const_lb ~ normal(0, 1);
   const_bl ~ normal(0, 1);
-  target += normal_lpdf(tgt_lb | mu_lb[std_lb_idx], sig_lb[std_lb_idx]);
-  target += normal_lpdf(tgt_bl | mu_bl[std_bl_idx], sig_bl[std_bl_idx]);
+//target += normal_lpdf(tgt_lb | mu_lb[std_lb_idx], sig_lb[std_lb_idx]);
+//target += normal_lpdf(tgt_bl | mu_bl[std_bl_idx], sig_bl[std_bl_idx]);
+  tgt ~ normal(append_row(mu_lb[std_lb_idx], mu_bl[std_bl_idx])
 }
 generated quantities {
   array[ntotal_lb] real tgt_lb_pred = normal_rng(mu_lb[std_lb_idx], sig_lb[std_lb_idx]);
   array[ntotal_bl] real tgt_bl_pred = normal_rng(mu_bl[std_bl_idx], sig_bl[std_bl_idx]);
+    // Log-likelihood for LOO
+  vector[ntotal_lb + ntotal_bl] log_lik;
+  // ... for loud to bright observations
+  for (n in 1:ntotal_lb) {
+    log_lik[n] = normal_lpdf(tgt_lb[n] | mu_lb[std_lb_idx[n]], sig_lb[std_lb_idx[n]]);
+  }
+  // ... for bright to loud observations
+  for (n in 1:ntotal_bl) {
+    log_lik[ntotal_lb + n] = normal_lpdf(tgt_bl[n] | mu_bl[std_bl_idx[n]], sig_bl[std_bl_idx[n]]);
+  }
 }
