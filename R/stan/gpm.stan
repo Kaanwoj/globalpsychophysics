@@ -61,8 +61,8 @@ transformed data {
 }
 parameters {
   real<lower=0> alpha_l;
-  real<lower=0> beta_l;
-  real<lower=0> beta_b;
+  real<lower=0, upper=1> beta_l;
+  real<lower=0, upper=1> beta_b;
   real<lower=0> omega1;
   real<lower=0> omega;
   real<lower=0> rho_ltob;
