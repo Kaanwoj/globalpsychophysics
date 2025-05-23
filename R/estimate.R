@@ -104,7 +104,7 @@ make_datlist <- function(data, ntrials) {
 #' data(matching)
 #' datlist <- make_datlist(data = matching[matching$id == 2, ], 48)
 #' m <- estimate(data = matching[matching$id == 2, ], 48, references = "constant")
-#' print(m, pars = c("alpha_l", "beta_l", "beta_b", "w_1", "const_lb",
+#' print(m, pars = c("alpha_l", "beta_l", "beta_b", "omega1", "omega", "const_lb",
 #'                   "const_bl"), probs = c(.025, .975))
 #' 
 estimate <- function(data, ntrials,
