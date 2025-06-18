@@ -1,3 +1,6 @@
+# Compiled stan files
+.rds
+
 # History files
 .Rhistory
 .Rapp.history
