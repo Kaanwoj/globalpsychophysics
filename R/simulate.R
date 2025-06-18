@@ -7,7 +7,7 @@
 create_param_set <- function(n = 1, 
                              method = "existing", 
                              restriction = "no",
-                             calc_w_p = FALSE) {
+                             calc_omega_p = FALSE) {
   # Match the argument with valid choices and get the first matching value
   method <- match.arg(method, choices = c("existing", "generate"))
   restriction <- match.arg(restriction, choices = c("no", "role-independent", "const"))
@@ -29,11 +29,11 @@ create_param_set <- function(n = 1,
       out$const_bl <- -1.622
       out$const_lb <- 0.0803
     }
-    if (calc_w_p) {
-      out$w_p <- 0.8
+    if (calc_omega_p) {
+      out$omega_p <- 0.8
     } else {
-      out$w <- 0.6
-      out$w_1 <- 0.8
+      out$omega <- 0.6
+      out$omega_1 <- 0.8
     }
   } else {
     out <- data.frame(alpha_b = 1,
@@ -54,11 +54,11 @@ create_param_set <- function(n = 1,
       out$const_bl <- runif(n, 100, 180)
       out$const_lb <- runif(, 0, 160)
     }
-    if (calc_w_p) {
-      out$w_p <- rnorm(n, 1, .3)
+    if (calc_omega_p) {
+      out$omega_p <- rnorm(n, 1, .3)
     } else {
-      out$w <- rnorm(n, 0.6, .05)
-      out$w_1 <- rnorm(n, 0.8, .1)
+      out$omega <- rnorm(n, 0.6, .05)
+      out$omega_1 <- rnorm(n, 0.8, .1)
     }
   }
   out
@@ -83,20 +83,20 @@ create_param_set <- function(n = 1,
 #' y_loud <- predict_gpm(c(69, 73, 77, 85), "bright_loud", param)
 #' @export
 predict_gpm <- function(standards, task, param, p = 1) {
-  if ("w_1" %in% names(param)) {
-    w_1 <- param$w_1
+  if ("omega_1" %in% names(param)) {
+    omega_1 <- param$omega_1
   } else {
-    w_1 <- NULL 
+    omega_1 <- NULL 
   }
-  if ("w_p" %in% names(param)) {
-    w_p <- param$w_p
+  if ("omega_p" %in% names(param)) {
+    omega_p <- param$omega_p
   } else {
-    w_p <- NULL 
+    omega_p <- NULL 
   }
-  if ("w" %in% names(param)) {
-    w <- param$w
+  if ("omega" %in% names(param)) {
+    omega <- param$omega
   } else {
-    w <- NULL 
+    omega <- NULL 
   }
   
   if((is.null(param$rho_bfroml) | is.null(param$rho_lfromb) | is.null(param$rho_ltob) | is.null(param$rho_btol))){
@@ -137,7 +137,7 @@ predict_gpm <- function(standards, task, param, p = 1) {
               alpha_std = alpha_std, alpha_tgt = alpha_tgt,
               beta_std = beta_std, beta_tgt = beta_tgt,
               p = as.numeric(p), 
-              w_1 = w_1, w_p = w_p, w = w,
+              omega_1 = omega_1, omega_p = omega_p, omega = omega,
               task = task,
               rho_std = rho_std, rho_tgt = rho_tgt)
 }
@@ -157,7 +157,7 @@ predict_gpm <- function(standards, task, param, p = 1) {
 #'        - p: production ratio values
 #' @param param A named vector of numbers representing the model parameters:
 #'                alpha_b, alpha_l, beta_b, beta_l,
-#'                w_p or w_1 and w (if w_p should be calculated) 
+#'                omega_p or omega_1 and omega (if omega_p should be calculated) 
 #'                rho_btol, rho_lfromb, rho_ltob, rho_bfroml if role-dependece 
 #'                or rho_b and rho_l if role-independece is assumed
 #' @returns A data frame with ntrials rows per condition, containing columns:

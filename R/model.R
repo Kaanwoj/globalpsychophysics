@@ -64,13 +64,13 @@ psi_inv <- function(x, alpha, beta) {
 
 #' Cognitive weighting function W(p)
 #' @export
-weigh_fun <- function(p, w_1, w = .6) (w_1 * p^w)
+weigh_fun <- function(p, omega_1, omega = .6) (omega_1 * p^omega)
 
 #' Calculate sum of internal references
 #' @export
-const_fun <- function(w_p, rho_std, db_inv_std, alpha_std, beta_std,
+const_fun <- function(omega_p, rho_std, db_inv_std, alpha_std, beta_std,
                            rho_tgt, db_inv_tgt, alpha_tgt, beta_tgt) {
-  w_p * psi(db_inv_std(rho_std), alpha_std, beta_std) -
+  omega_p * psi(db_inv_std(rho_std), alpha_std, beta_std) -
         psi(db_inv_tgt(rho_tgt), alpha_tgt, beta_tgt)
 }
 
@@ -87,7 +87,7 @@ const_fun <- function(w_p, rho_std, db_inv_std, alpha_std, beta_std,
 #' of the standard.
 #' @param beta_tgt A number for the parameter of the psychophysical function
 #' of the target.
-#' @param w_p A number representing the weighted production ratios W(p).
+#' @param omega_p A number representing the weighted production ratios W(p).
 #' @param rho_std A number for the internal reference parameter pertaining to
 #' the standard dimension.
 #' @param rho_tgt A number for the internal reference parameter pertaining to
@@ -102,7 +102,7 @@ const_fun <- function(w_p, rho_std, db_inv_std, alpha_std, beta_std,
 gpm <- function(standard_intensity,
                 alpha_std, alpha_tgt,
                 beta_std, beta_tgt,
-                w_p,
+                omega_p,
                 rho_std = NULL, rho_tgt = NULL, const = NULL,
                 task = c("bright_loud", "loud_bright")) {
 
@@ -120,14 +120,14 @@ gpm <- function(standard_intensity,
     db_tgt <- db_lambert
   }
   if(!(is.null(rho_std) & is.null(rho_tgt))) {
-    const <- const_fun(w_p, rho_std, db_inv_std, alpha_std, beta_std,
+    const <- const_fun(omega_p, rho_std, db_inv_std, alpha_std, beta_std,
                            rho_tgt, db_inv_tgt, alpha_tgt, beta_tgt)
   }else if(is.null(rho_std)){
     stop(glue::glue("The internal reference of the standard stimuli in {task} is NULL. Please provide a valid input for this parameter"))
   }else{
     stop(glue::glue("The internal reference of the target stimuli in {task} is NULL. Please provide a valid input for this parameter"))
   }
-  (w_p * psi(db_inv_std(standard_intensity), alpha_std, beta_std) - const) |>
+  (omega_p * psi(db_inv_std(standard_intensity), alpha_std, beta_std) - const) |>
     psi_inv(alpha_tgt, beta_tgt) |>
     db_tgt() |>
     stats::setNames(rep("x_p", length(standard_intensity)))
@@ -152,12 +152,12 @@ gpm <- function(standard_intensity,
 #' @param beta_tgt A number for the parameter of the psychophysical function
 #'        of the target.
 #' @param p An integer (1, 2, or 3) representing the production ratio to be used.
-#' @param w_1 A number representing the weight parameter for the weighting 
+#' @param omega_1 A number representing the weight parameter for the weighting 
 #'            function.
-#' @param w A number representing the exponent in the weighting function. 
+#' @param omega A number representing the exponent in the weighting function. 
 #'          Default is 0.6.
-#' @param w_p A direct specification of the weighted production ratio. 
-#'        If w_1 and w are given, this will be ignored.
+#' @param omega_p A direct specification of the weighted production ratio. 
+#'        If omega_1 and omega are given, this will be ignored.
 #' @param rho_std A number for the internal reference parameter pertaining to
 #'        the standard dimension.
 #' @param rho_tgt A number for the internal reference parameter pertaining to
@@ -176,13 +176,13 @@ gpm <- function(standard_intensity,
 #'                alpha_std = 1, alpha_tgt = 0.5,
 #'                beta_std = 0.33, beta_tgt = 0.67,
 #'                rho_std = 20, rho_tgt = 20,
-#'                p = 2, w_1 = 1, w = 0.6,
+#'                p = 2, omega_1 = 1, omega = 0.6,
 #'                task = "bright_loud")
 #' @export
 gpm_multiple_p <- function(standard_intensity,
                         alpha_std, alpha_tgt,
                         beta_std, beta_tgt,
-                        p, w_1 = NULL, w = NULL, w_p = NULL,
+                        p, omega_1 = NULL, omega = NULL, omega_p = NULL,
                         rho_std = NULL, rho_tgt = NULL, const = NULL,
                         task = c("bright_loud", "loud_bright")) {
   
@@ -190,20 +190,20 @@ gpm_multiple_p <- function(standard_intensity,
   if (!(p %in% 1:3))
     stop("Production factor p not valid, must be 1, 2, or 3")
   
-  # Calculate w_p based on p, w_1, and w
-  if (!is.null(w_1) && !is.null(w)) {
-    w_p <- weigh_fun(p, w_1, w)
-  } else if (!is.null(w_p)) {
-    w_p <- w_p
+  # Calculate omega_p based on p, omega_1, and omega
+  if (!is.null(omega_1) && !is.null(omega)) {
+    omega_p <- weigh_fun(p, omega_1, omega)
+  } else if (!is.null(omega_p)) {
+    omega_p <- omega_p
   } else {
-    stop("Either w_p or both w_1 and w must be provided")
+    stop("Either omega_p or both omega_1 and omega must be provided")
   }
   
-  # Call the original gpm function with calculated w_p
+  # Call the original gpm function with calculated omega_p
   result <- gpm(standard_intensity = standard_intensity,
                 alpha_std = alpha_std, alpha_tgt = alpha_tgt,
                 beta_std = beta_std, beta_tgt = beta_tgt,
-                w_p = w_p, 
+                omega_p = omega_p, 
                 rho_std = rho_std, rho_tgt = rho_tgt, 
                 const = const,
                 task = task)
