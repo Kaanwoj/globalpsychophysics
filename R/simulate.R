@@ -91,7 +91,7 @@ predict_gpm <- function(standards, task, param, p = 1) {
   if ("omega_p" %in% names(param)) {
     omega_p <- param$omega_p
   } else {
-    omega_p <- NULL 
+    omega_p <- NULL
   }
   if ("omega" %in% names(param)) {
     omega <- param$omega
@@ -244,7 +244,7 @@ simulate_gpm <- function(ntrials, cond, param) {
   }
   
   # Check for invalid sigma values
-  invalid_sigma <- is.na(out$sigma) | out$sigma <= 0
+  invalid_sigma <- is.na(out$sigma) | out$sigma < 0
   if(any(invalid_sigma)){
     warning(paste("Invalid sigma values detected for", sum(invalid_sigma), 
                   "rows. Using default value."))
