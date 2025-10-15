@@ -194,7 +194,13 @@ gpm_multiple_p <- function(standard_intensity,
   if (!is.null(omega_1) && !is.null(omega)) {
     omega_p <- weigh_fun(p, omega_1, omega)
   } else if (!is.null(omega_p)) {
+    if (length(omega_p > 1)) {
+      omega_p <- omega_p[as.character(p)]
+      stopifnot("if omega_p is a vector, it must be named with the 
+                production factors p given as argument p" = !is.na(omega_p))
+    } else {
     omega_p <- omega_p
+    }
   } else {
     stop("Either omega_p or both omega_1 and omega must be provided")
   }
