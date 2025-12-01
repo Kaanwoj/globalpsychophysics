@@ -244,11 +244,11 @@ simulate_gpm <- function(ntrials, cond, param) {
   }
   
   # Check for invalid sigma values
-  invalid_sigma <- is.na(out$sigma) | out$sigma < 0
+  invalid_sigma <- (is.na(out$sigma) | out$sigma < 0)
   if(any(invalid_sigma)){
-    warning(paste("Invalid sigma values detected for", sum(invalid_sigma), 
+    warning(paste("Invalid sigma values detected for", sum(invalid_sigma),
                   "rows. Using default value."))
-    out$sigma[invalid_sigma] <- 1  
+    out$sigma[invalid_sigma] <- 1
   }
   
   out$tgt <- rnorm(nrow(out), mean = out$mu, sd = out$sigma)

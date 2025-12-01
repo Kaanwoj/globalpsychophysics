@@ -7,21 +7,25 @@
 predict_gpm(standards, task, param, p = 1)
 }
 \arguments{
-\item{standards}{A vector of numbers.}
+\item{standards}{A vector of numbers representing the physical intensities
+of standard stimuli (in dB).}
 
 \item{task}{A character string, either "bright_loud" or "loud_bright"
 indicating the task.}
 
 \item{param}{A named vector of numbers representing the model parameters.}
+
+\item{p}{An integer (default: 1) representing the production ratio to be used.}
 }
 \value{
-A vector of predicted values.
+A vector of predicted physical intensities.
 }
 \description{
-Predict magnitude productions from global psychophysics model
+A wrapper function that extracts parameters from a parameter set and calls
+the appropriate global psychophysics model function to predict magnitude productions.
 }
 \examples{
 param <- create_param_set()
-y_bright <- predict_gpm(c(34, 43, 52, 70), "loud_bright", param)
+y_bright <- predict_gpm(c(34, 43, 52, 70), "loud_bright", param, p = 2)
 y_loud <- predict_gpm(c(69, 73, 77, 85), "bright_loud", param)
 }

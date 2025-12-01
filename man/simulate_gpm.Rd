@@ -10,21 +10,28 @@ simulate_gpm(ntrials, cond, param)
 \arguments{
 \item{ntrials}{A number of trials per condition.}
 
-\item{cond}{A data frame with columns task, std, sigma, and p.
-sigma: number representing the standard deviation for loudness and
-brightness productions.}
+\item{cond}{A data frame with columns:
+- task: factor with values "loud_bright" or "bright_loud"
+- std: numeric values representing standard intensities
+- sigma: standard deviation for adding noise to predictions
+- p: production ratio values}
 
-\item{param}{A named vector of numbers representing the model parameters.}
+\item{param}{A named vector of numbers representing the model parameters:
+alpha_b, alpha_l, beta_b, beta_l,
+omega_p or omega_1 and omega (if omega_p should be calculated)
+rho_btol, rho_lfromb, rho_ltob, rho_bfroml if role-dependece
+or rho_b and rho_l if role-independece is assumed}
 }
 \value{
-A data frame with the simulated magnitude productions for ntrials
-per condition.
+A data frame with ntrials rows per condition, containing columns:
+task, std, sigma, p, mu (predicted value), and tgt (noisy response).
 }
 \description{
-Simulate a magnitude production data set for both tasks and one or more
-production ratios
+This function generates simulated magnitude production data by predicting responses
+using the global psychophysics model and adding random noise.
 }
 \examples{
+Single production factor example 
 cond <- data.frame(
                    task = rep(c("loud_bright", "bright_loud"), each = 6),
                    std = c(25, 34, 43, 52, 61, 70,  # loud std
@@ -34,4 +41,23 @@ cond <- data.frame(
 )
 param <- create_param_set()
 simulate_gpm(20, cond, param)
+
+Multiple production factors example
+param <- create_param_set()
+
+loud_standards <- c(25, 34, 43, 52, 61, 70)
+bright_standards <- c(69, 73, 77, 81, 85, 89)
+
+cond_loud <- expand.grid(task = "loud_bright",
+                         std = loud_standards,
+                         p = c(1, 2, 3))
+                         
+cond_bright <- expand.grid(task = "bright_loud",
+                           std = bright_standards,
+                           p = c(1, 2, 3))
+                           
+cond_multi_p <- rbind(cond_loud, cond_bright)
+cond_multi_p$sigma <- ifelse(cond_multi_p$task == "bright_loud", 3, 3)
+
+simulated_data <- simulate_gpm(200, cond_multi_p, param)
 }

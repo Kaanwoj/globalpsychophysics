@@ -4,7 +4,7 @@
 \alias{weigh_fun}
 \title{Cognitive weighting function W(p)}
 \usage{
-weigh_fun(p, w_1, w = 0.6)
+weigh_fun(p, omega_1, omega = 0.6)
 }
 \description{
 Cognitive weighting function W(p)

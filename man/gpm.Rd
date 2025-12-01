@@ -11,28 +11,41 @@ gpm(
   alpha_tgt,
   beta_std,
   beta_tgt,
-  w_p,
-  task = c("bright_loud", "loud_bright"),
+  omega_p,
   rho_std = NULL,
   rho_tgt = NULL,
-  const = NULL
+  const = NULL,
+  task = c("bright_loud", "loud_bright")
 )
 }
 \arguments{
 \item{standard_intensity}{A number or vector representing the physical
-intensity or intensities of the standard stimulus / stimuli (in dB).}
+intensity/ies of the standard stimulus / stimuli (in dB).}
 
-\item{w_p}{A number representing the weighted production ratios W(p)}
+\item{alpha_std}{A number for the parameter of the psychophysical function
+of the standard.}
+
+\item{alpha_tgt}{A number for the parameter of the psychophysical function
+of the target.}
+
+\item{beta_std}{A number for the parameter of the psychophysical function
+of the standard.}
+
+\item{beta_tgt}{A number for the parameter of the psychophysical function
+of the target.}
+
+\item{omega_p}{A number representing the weighted production ratios W(p).}
+
+\item{rho_std}{A number for the internal reference parameter pertaining to
+the standard dimension.}
+
+\item{rho_tgt}{A number for the internal reference parameter pertaining to
+the target dimension.}
+
+\item{const}{A number representing the sum of rho's in the restricted model
+for matching / p=1 only.}
 
 \item{task}{Either "bright_loud" or "loud_bright" indicating the task.}
-
-\item{A}{numeric vector with the parameter values for ...}
-
-\item{db_inv_std}{A function corresponding to the standard dimension.}
-
-\item{db_inv_tgt}{A function corresponding to the standard dimension.}
-
-\item{db_tgt}{A function corresponding to the standard dimension.}
 }
 \value{
 A number or vector representing the physical intensity predicted by

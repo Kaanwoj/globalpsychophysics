@@ -8,6 +8,7 @@ options(mc.cores = parallel::detectCores())
 #' task direction (bright_loud or loud_bright).
 #' @param ntrials number of trials per standard.
 #' @returns
+#' @export
 make_datlist <- function(data, ntrials) {
 
   # check standard ------------------------------------------------------------
@@ -107,6 +108,7 @@ make_datlist <- function(data, ntrials) {
 #' print(m, pars = c("alpha_l", "beta_l", "beta_b", "omega1", "omega", "const_lb",
 #'                   "const_bl"), probs = c(.025, .975))
 #' 
+#' @export
 estimate <- function(data, ntrials,
                      references = c("dependent", "independent", "constant")) {
   references <- match.arg(references)
