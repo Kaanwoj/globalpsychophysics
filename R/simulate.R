@@ -238,16 +238,17 @@ simulate_gpm <- function(ntrials, cond, param) {
   # Check for invalid mu values
   invalid_mu <- is.na(out$mu) | is.infinite(out$mu)
   if(any(invalid_mu)){
-    warning(paste("Invalid mu values detected for", sum(invalid_mu), 
-                  "rows. Check your predict_gpm function outputs."))
+    warning(paste(sum(invalid_mu), "invalid mu values detected and",
+                  "set to 50. This happens when rho_standard > standard.",
+                  "Check your predict_gpm function outputs."))
     out$mu[invalid_mu] <- 50
   }
   
   # Check for invalid sigma values
   invalid_sigma <- (is.na(out$sigma) | out$sigma < 0)
   if(any(invalid_sigma)){
-    warning(paste("Invalid sigma values detected for", sum(invalid_sigma),
-                  "rows. Using default value."))
+    warning(paste(sum(invalid_sigma), "invalid sigma values detected and", 
+                  "set to 1."))
     out$sigma[invalid_sigma] <- 1
   }
   
