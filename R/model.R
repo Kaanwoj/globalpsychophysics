@@ -106,7 +106,7 @@ gpm <- function(standard_intensity,
                 rho_std = NULL, rho_tgt = NULL, const = NULL,
                 task = c("bright_loud", "loud_bright")) {
 
-  # Setzt alpha_b reliabel auf 1 aka das alpha, das nicht übergeben wird
+  # Set alpha_b reliable to 1, i.e. alpha, that is not given as argument
   if (is.null(alpha_std) || length(alpha_std) == 0) alpha_std <- 1
   if (is.null(alpha_tgt) || length(alpha_tgt) == 0) alpha_tgt <- 1
   
@@ -187,6 +187,9 @@ gpm_multiple_p <- function(standard_intensity,
                         task = c("bright_loud", "loud_bright")) {
   
   # Validate production factor p
+  if (length(p) > 1)
+    stop("Production factor p not valid, must be a single integer, either 1, 2,
+         or 3")
   if (!(p %in% 1:3))
     stop("Production factor p not valid, must be 1, 2, or 3")
   
