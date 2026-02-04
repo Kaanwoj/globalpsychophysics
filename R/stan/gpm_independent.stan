@@ -1,5 +1,5 @@
 // global psychophysics model
-// reference parameters are estimated as potentially role-dependent
+// reference parameters are estimated as role-independent
 // The variances are estimated depending on sigindex input
 
 functions {
@@ -11,7 +11,7 @@ functions {
       return omega_1 * pow(p, omega);
   }
   real loud_to_bright(real std_loud, real alpha_l, real alpha_b, real beta_l,
-                      real beta_b, real rho_ltob, real rho_bfroml,
+                      real beta_b, real rho_l, real rho_b,
                       real omega_1, real p, real omega) {
     return db_lambert(
       pow(
@@ -19,14 +19,14 @@ functions {
           (weigh_fun(p, omega_1, omega) * alpha_l * 
              pow(db_inv_spl(std_loud), beta_l) -
            weigh_fun(p, omega_1, omega) * alpha_l * 
-             pow(db_inv_spl(rho_ltob), beta_l) +
-           alpha_b * pow(db_inv_lambert(rho_bfroml), beta_b)
+             pow(db_inv_spl(rho_l), beta_l) +
+           alpha_b * pow(db_inv_lambert(rho_b), beta_b)
           ),
         inv(beta_b))
     );
   }
   real bright_to_loud(real std_bright, real alpha_l, real alpha_b, real beta_l,
-                      real beta_b, real rho_btol, real rho_lfromb,
+                      real beta_b, real rho_b, real rho_l,
                       real omega_1, real p, real omega) {
     return db_spl(
       pow(
@@ -34,8 +34,8 @@ functions {
           (weigh_fun(p, omega_1, omega) * alpha_b *
              pow(db_inv_lambert(std_bright), beta_b) -
            weigh_fun(p, omega_1, omega) * alpha_b *
-             pow(db_inv_lambert(rho_btol), beta_b) +
-           alpha_l * pow(db_inv_spl(rho_lfromb), beta_l)
+             pow(db_inv_lambert(rho_b), beta_b) +
+           alpha_l * pow(db_inv_spl(rho_l), beta_l)
           ),
         inv(beta_l))
     );
@@ -60,14 +60,10 @@ data {
   real<lower=0> beta_b_b;
   real<lower=0> beta_l_a;
   real<lower=0> beta_l_b;
-  real<lower=0> rho_btol_mu;
-  real<lower=0> rho_btol_sigma;
-  real<lower=0> rho_bfroml_mu;
-  real<lower=0> rho_bfroml_sigma;
-  real<lower=0> rho_ltob_mu;
-  real<lower=0> rho_ltob_sigma;
-  real<lower=0> rho_lfromb_mu;
-  real<lower=0> rho_lfromb_sigma;
+  real<lower=0> rho_b_mu;
+  real<lower=0> rho_b_sigma;
+  real<lower=0> rho_l_mu;
+  real<lower=0> rho_l_sigma;
   real omega_1_logmu;
   real<lower=0> omega_1_logsigma;
   real<lower=0> omega_a;
@@ -85,20 +81,18 @@ parameters {
   real<lower=0> omega_1;
   real<lower=0, upper=1> omega;
   vector<lower=0>[nsig] sig;
-  real rho_ltob;
-  real rho_bfroml;
-  real rho_btol;
-  real rho_lfromb;
+  real rho_b;
+  real rho_l;
 }
 transformed parameters {
   array[ncond] real mu; 
   for (i in 1:ncond) {
     if (task[i] == 1) {
       mu[i] = loud_to_bright(std[i], alpha_l, alpha_b, beta_l, beta_b,
-                             rho_ltob, rho_bfroml, omega_1, p[i], omega);
+                             rho_l, rho_b, omega_1, p[i], omega);
     } else if (task[i] == 2) {
       mu[i] = bright_to_loud(std[i], alpha_l, alpha_b, beta_l, beta_b,
-                             rho_btol, rho_lfromb, omega_1, p[i], omega);
+                             rho_b, rho_l, omega_1, p[i], omega);
 
     }
   }
@@ -107,10 +101,8 @@ model {
   target += lognormal_lpdf(alpha_l | alpha_l_logmu, alpha_l_logsigma);
   target += beta_lpdf(beta_b | beta_b_a, beta_b_b);
   target += beta_lpdf(beta_l | beta_l_a, beta_l_b);
-  target += normal_lpdf(rho_btol | rho_btol_mu, rho_btol_sigma);
-  target += normal_lpdf(rho_bfroml | rho_bfroml_mu, rho_bfroml_sigma);
-  target += normal_lpdf(rho_ltob | rho_ltob_mu, rho_ltob_sigma);
-  target += normal_lpdf(rho_lfromb | rho_lfromb_mu, rho_lfromb_sigma);
+  target += normal_lpdf(rho_b | rho_b_mu, rho_b_sigma);
+  target += normal_lpdf(rho_l | rho_l_mu, rho_l_sigma);
   target += lognormal_lpdf(omega_1 | omega_1_logmu, omega_1_logsigma);
   target += beta_lpdf(omega | omega_a, omega_b);
   target += normal_lpdf(sig | sig_mu, sig_sigma) -
