@@ -237,9 +237,9 @@ simulate_gpm <- function(ntrials, cond, param) {
   
   # Check for invalid mu values
   invalid_mu <- is.na(out$mu) | is.infinite(out$mu)
-  message("--- BEFORE ---")
-  print(head(out[invalid_mu,]))
   if(any(invalid_mu)){
+    message("--- BEFORE ---")
+    print(head(out[invalid_mu,]))
     warning(paste(sum(invalid_mu), "invalid mu values detected and",
                   "set to 52 (dB Lambert) or 15 (dB SPL).",
                   "Check your predict_gpm function outputs."))
@@ -249,9 +249,9 @@ simulate_gpm <- function(ntrials, cond, param) {
         invalid_mu & mu < 15 & task == "bright_loud" ~ 15,
         TRUE ~ mu
       ))
+    message("--- AFTER ---")
+    print(head(out[invalid_mu,]))
   }
-  message("--- AFTER ---")
-  print(head(out[invalid_mu,]))
   
   # Check for invalid sigma values
   invalid_sigma <- (is.na(out$sigma) | out$sigma < 0)
