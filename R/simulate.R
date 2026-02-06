@@ -245,9 +245,9 @@ simulate_gpm <- function(ntrials, cond, param) {
                   "Check your predict_gpm function outputs."))
 
     out$mu <- ifelse(
-      out$invalid_mu & out$mu < 52 & out$task == "loud_bright",
+      out$task == "loud_bright" & (invalid_mu | out$mu < 52),
         52,
-        ifelse(out$invalid_mu & out$mu < 15 & out$task == "bright_loud",
+        ifelse(out$task == "bright_loud" & (invalid_mu | out$mu < 15),
           15,
           out$mu)
     )
