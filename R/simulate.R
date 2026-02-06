@@ -243,12 +243,14 @@ simulate_gpm <- function(ntrials, cond, param) {
     warning(paste(sum(invalid_mu), "invalid mu values detected and",
                   "set to 52 (dB Lambert) or 15 (dB SPL).",
                   "Check your predict_gpm function outputs."))
-    out <- out %>% 
-      mutate(mu = case_when(
-        invalid_mu & mu < 52 & task == "loud_bright" ~ 52,
-        invalid_mu & mu < 15 & task == "bright_loud" ~ 15,
-        TRUE ~ mu
-      ))
+
+    out$mu <- ifelse(
+      out$invalid_mu & out$mu < 52 & out$task == "loud_bright",
+        52,
+        ifelse(out$invalid_mu & out$mu < 15 & out$task == "bright_loud",
+          15,
+          out$mu)
+    )
     message("--- AFTER ---")
     print(head(out[invalid_mu,]))
   }
