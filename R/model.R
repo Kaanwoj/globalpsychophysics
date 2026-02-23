@@ -204,6 +204,8 @@ gpm_multiple_p <- function(standard_intensity,
     } else {
     omega_p <- omega_p
     }
+  } else if (!is.null(omega_1) && p == 1) {
+    omega_p <- omega_1
   } else {
     stop("Either omega_p or both omega_1 and omega must be provided")
   }
