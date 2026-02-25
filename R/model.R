@@ -63,10 +63,12 @@ psi_inv <- function(x, alpha, beta) {
 }
 
 #' Cognitive weighting function W(p)
+#'
 #' @export
 weigh_fun <- function(p, omega_1, omega = .6) (omega_1 * p^omega)
 
 #' Calculate sum of internal references
+#'
 #' @export
 const_fun <- function(omega_p, rho_std, db_inv_std, alpha_std, beta_std,
                            rho_tgt, db_inv_tgt, alpha_tgt, beta_tgt) {
@@ -119,12 +121,15 @@ gpm <- function(standard_intensity,
     db_inv_tgt <- db_inv_lambert
     db_tgt <- db_lambert
   }
-  if(!(is.null(rho_std) & is.null(rho_tgt))) {
+  
+  if (!(is.null(rho_std) & is.null(rho_tgt))) {
     const <- const_fun(omega_p, rho_std, db_inv_std, alpha_std, beta_std,
                            rho_tgt, db_inv_tgt, alpha_tgt, beta_tgt)
-  }else if(is.null(rho_std)){
+  } else if (!is.null(const)) {
+    const = const
+  } else if (is.null(rho_std)) {
     stop(glue::glue("The internal reference of the standard stimuli in {task} is NULL. Please provide a valid input for this parameter"))
-  }else{
+  } else {
     stop(glue::glue("The internal reference of the target stimuli in {task} is NULL. Please provide a valid input for this parameter"))
   }
   (omega_p * psi(db_inv_std(standard_intensity), alpha_std, beta_std) - const) |>
@@ -222,4 +227,28 @@ gpm_multiple_p <- function(standard_intensity,
   names(result) <- rep(paste0("x_", p), length(result))
   
   return(result)
+}
+
+#' Dependence of rho parameters on constant in case of only p=1 
+#' (H function, Heller, 2021)
+# H_bl(rho_b->l) = rho_l<-b
+const_inv_std <- function(rho_sbl, param) {
+  alpha_b <- 1
+  with(param,
+    db_spl(
+      psi_inv(- const_bl + omega_1 * psi(db_inv_lambert(rho_sbl), alpha_b, beta_b),
+              alpha_l, beta_l)
+    )
+  )
+}
+
+# H_lb(rho_b<-l) = rho_l->b
+const_inv_tgt <- function(rho_clb, param) {
+  alpha_b <- 1
+  with(param,
+    db_spl(
+      (1 / (omega_1 * alpha_l) *
+       (const_lb + alpha_b * db_inv_lambert(rho_clb)^beta_b))^(1 / beta_l)
+    )
+  )
 }

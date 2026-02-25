@@ -99,47 +99,61 @@ predict_gpm <- function(standards, task, param, p = 1) {
     omega <- NULL 
   }
   
-  if((is.null(param$rho_bfroml) | is.null(param$rho_lfromb) | is.null(param$rho_ltob) | is.null(param$rho_btol))){
-    if(task == "bright_loud"){
-      rho_std <- param$rho_b
-      rho_tgt <- param$rho_l
-      alpha_std <- param$alpha_b
-      alpha_tgt <- param$alpha_l
-      beta_std <- param$beta_b
-      beta_tgt <- param$beta_l
-    }else{
-      rho_std <- param$rho_l
-      rho_tgt <- param$rho_b
-      alpha_std <- param$alpha_l
-      alpha_tgt <- param$alpha_b
-      beta_std <- param$beta_l
-      beta_tgt <- param$beta_b
-    }
-  }else{
-    if(task == "bright_loud"){
+  if (!is.null(param$rho_bfroml) & !is.null(param$rho_lfromb) & 
+      !is.null(param$rho_ltob) & !is.null(param$rho_btol)) {
+    # in case of role-dependence
+    if (task == "bright_loud"){
       rho_std <- param$rho_btol
       rho_tgt <- param$rho_lfromb
-      alpha_std <- param$alpha_b
-      alpha_tgt <- param$alpha_l
-      beta_std <- param$beta_b
-      beta_tgt <- param$beta_l
-    }else{
+    } else {
       rho_std <- param$rho_ltob
       rho_tgt <- param$rho_bfroml
-      alpha_std <- param$alpha_l
-      alpha_tgt <- param$alpha_b
-      beta_std <- param$beta_l
-      beta_tgt <- param$beta_b
     }
+  } else if (!is.null(param$rho_b) & !is.null(param$rho_l)) {
+    # in case of role-independence
+    if(task == "bright_loud") {
+      rho_std <- param$rho_b
+      rho_tgt <- param$rho_l
+    } else {
+      rho_std <- param$rho_l
+      rho_tgt <- param$rho_b
+    }
+  } else if (!is.null(param$const_lb) & !is.null(param$const_bl)) {
+    rho_std = NULL
+    rho_tgt = NULL
+    if (task == "bright_loud") {
+      const = param$const_bl
+    } else {
+      const = param$const_lb
+    }
+  } else {
+    stop("Provide parameter values for either
+         role-dependence reference parameters (rho_btol, rho_bfroml, rho_ltob,
+                                               and rho_ltob);
+         role-independence (rho_l and rho_b), or 
+         constant sum (const_lb and const_bl)")
+  }
+  
+  if (task == "bright_loud"){
+    alpha_std <- param$alpha_b
+    alpha_tgt <- param$alpha_l
+    beta_std <- param$beta_b
+    beta_tgt <- param$beta_l
+  } else {
+    alpha_std <- param$alpha_l
+    alpha_tgt <- param$alpha_b
+    beta_std <- param$beta_l
+    beta_tgt <- param$beta_b
   }
 
   gpm_multiple_p(standard_intensity = standards,
               alpha_std = alpha_std, alpha_tgt = alpha_tgt,
               beta_std = beta_std, beta_tgt = beta_tgt,
               p = as.numeric(p), 
-              omega_1 = omega_1, omega_p = omega_p, omega = omega,
-              task = task,
-              rho_std = rho_std, rho_tgt = rho_tgt)
+              omega_1 = omega_1, omega = omega, omega_p = omega_p,
+              rho_std = rho_std, rho_tgt = rho_tgt,
+              const = const,
+              task = task)
 }
 
 #' Simulate a magnitude production data set for both tasks and one or more
