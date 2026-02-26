@@ -36,6 +36,25 @@ db_inv_spl <- function(db_l) {
   10^(db_l / 20) * 2 * 10^-5
 }
 
+#' Convert displacement in mm to dB 
+#'
+#' @param x_t A number representing a displacement of the tactor in mm.
+#' @returns A number representing the respective sound in dB relative
+#' to 0.001578822 mm displacement.
+#' @export
+db_disp <- function(x_t) {
+  40 * log10(x_t/0.001578822)
+}
+
+#' Convert dB to displacement in mm
+#'
+#' @param db_t A number representing a puls in dB.
+#' @returns A number representing the displacement in mm.
+#' @export
+db_inv_disp <- function(db_t) {
+  0.001578822 * 10^(db_t / 40)
+}
+
 #' Psychophysical function phi(x) = alpha * x^beta
 #'
 #' @param x A number representing a physical stimulus intentsity (e.g.
@@ -96,7 +115,8 @@ const_fun <- function(omega_p, rho_std, db_inv_std, alpha_std, beta_std,
 #' the target dimension.
 #' @param const A number representing the sum of rho's in the restricted model
 #'        for matching / p=1 only.
-#' @param task Either "bright_loud" or "loud_bright" indicating the task.
+#' @param task String indicating the task, e.g "bright_loud", "loud_bright", 
+#' "strong_loud", "bright_strong", etc.
 #' @returns A number or vector representing the physical intensity predicted by
 #' the global psychophysics model.
 #' @export
@@ -107,24 +127,36 @@ gpm <- function(standard_intensity,
                 omega_p,
                 rho_std = NULL, rho_tgt = NULL, const = NULL,
                 task = c("bright_loud", "loud_bright")) {
-
+  
   # Set alpha_b reliable to 1, i.e. alpha, that is not given as argument
   if (is.null(alpha_std) || length(alpha_std) == 0) alpha_std <- 1
   if (is.null(alpha_tgt) || length(alpha_tgt) == 0) alpha_tgt <- 1
   
-  if (task == "bright_loud") {
-    db_inv_std <- db_inv_lambert
+  standard_modality <- strsplit(task, "_")[[1]][1]
+  target_modality <- strsplit(task, "_")[[1]][2]
+  
+  if(target_modality == "loud"){
     db_inv_tgt <- db_inv_spl
     db_tgt <- db_spl
-  } else {
-    db_inv_std <- db_inv_spl
+  }else if(target_modality == "bright"){
     db_inv_tgt <- db_inv_lambert
     db_tgt <- db_lambert
+  }else if(target_modality == "strong"){
+    db_inv_tgt <- db_inv_disp
+    db_tgt <- db_disp
+  }
+  
+  if(standard_modality == "loud"){
+    db_inv_tgt <- db_inv_lambert
+  }else if(standard_modality == "bright"){
+    db_inv_std <- db_inv_lambert
+  }else if(standard_modality == "strong"){
+    db_inv_tgt <- db_inv_disp
   }
   
   if (!(is.null(rho_std) & is.null(rho_tgt))) {
     const <- const_fun(omega_p, rho_std, db_inv_std, alpha_std, beta_std,
-                           rho_tgt, db_inv_tgt, alpha_tgt, beta_tgt)
+                       rho_tgt, db_inv_tgt, alpha_tgt, beta_tgt)
   } else if (!is.null(const)) {
     const = const
   } else if (is.null(rho_std)) {
@@ -169,7 +201,8 @@ gpm <- function(standard_intensity,
 #'        the target dimension.
 #' @param const A number representing the sum of rho's in the restricted model
 #'        for matching / p=1 only.
-#' @param task Either "bright_loud" or "loud_bright" indicating the task.
+#' @param task String indicating the task, e.g "bright_loud", "loud_bright", 
+#' "strong_loud", "bright_strong", etc.
 #'
 #' @returns A number or vector representing the physical intensity predicted by
 #'          the global psychophysics model, with names reflecting the production 
