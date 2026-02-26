@@ -4,60 +4,143 @@
 #' param <- create_param_set(restriction = "role-independent")
 #' param <- create_param_set(restriction = "const")
 #' @export
-create_param_set <- function(n = 1, 
-                             method = "existing", 
+create_param_set <- function(n = 1,
+                             method = "existing",
                              restriction = "no",
-                             calc_omega_p = FALSE) {
-  # Match the argument with valid choices and get the first matching value
-  method <- match.arg(method, choices = c("existing", "generate"))
-  restriction <- match.arg(restriction, choices = c("no", "role-independent", "const"))
-
+                             calc_omega_p = FALSE,
+                             task = c("bright_loud", "loud_bright",
+                                      "strong_loud", "loud_strong",
+                                      "bright_strong", "strong_bright")){
+  
+  method      <- match.arg(method, choices = c("existing", "generate"))
+  restriction <- match.arg(restriction, choices = c("no", "role-independent", 
+                                                    "const"))
+  task        <- match.arg(task)
+  
+  standard_modality <- sub("_.*", "", task)
+  target_modality   <- sub(".*_", "", task)
+  modalities        <- unique(c(standard_modality, target_modality))
+  
   if (method == "existing") {
-    out <- data.frame(alpha_b = 1, alpha_l = 15.48,
-                      beta_b = 0.4, beta_l = 0.26)
+    # TODO insert reasonable values for _t parameters
+    out <- data.frame(alpha_b = 1, alpha_l = 15.48, alpha_t = 1,
+                      beta_b  = 0.4, beta_l = 0.26, beta_t = 0.33)
+    
+    # Keep only alphas/betas relevant to the task
+    alpha_cols <- paste0("alpha_", substring(modalities, 1, 1))
+    beta_cols  <- paste0("beta_",  substring(modalities, 1, 1))
+    out <- out[, c(alpha_cols, beta_cols), drop = FALSE]
+    
     if (restriction == "no") {
-      out$rho_btol <- 38.3
-      out$rho_lfromb <- 20
-      out$rho_ltob <- 32.4
-      out$rho_bfroml <- 71.8
+      std <- substring(standard_modality, 1, 1)
+      tgt <- substring(target_modality,   1, 1)
+      out[[paste0("rho_", std, "to", tgt)]]   <- switch(task,
+                                                        bright_loud   = 38.3,  
+                                                        loud_bright  = 32.4,
+                                                        strong_loud   = 35,    
+                                                        loud_strong  = 32.4,
+                                                        bright_strong = 38.3,  
+                                                        strong_bright = 35)
+      out[[paste0("rho_", tgt, "from", std)]] <- switch(task,
+                                                        bright_loud   = 20,    
+                                                        loud_bright  = 71.8,
+                                                        strong_loud   = 50,    
+                                                        loud_strong  = 71.8,
+                                                        bright_strong = 20,    
+                                                        strong_bright = 50)
     }
     if (restriction == "role-independent") {
-      out$rho_b <- 78.2
-      out$rho_l <- 51.4
+      for (m in modalities) {
+        out[[paste0("rho_", substring(m, 1, 1))]] <- switch(m,
+                                                            bright = 78.2, 
+                                                            loud = 51.4, 
+                                                            strong = 60)
+      }
     }
     if (restriction == "const") {
-      out$const_bl <- -1.622
-      out$const_lb <- 0.0803
+      std <- substring(standard_modality, 1, 1)
+      tgt <- substring(target_modality,   1, 1)
+      out[[paste0("const_", std, tgt)]] <- switch(task,
+                                                  bright_loud   = -1.622, 
+                                                  loud_bright  =  0.0803,
+                                                  strong_loud   =  0.01,     
+                                                  loud_strong  =  0.0803,
+                                                  bright_strong =  -1.622,     
+                                                  strong_bright = 0.01)
     }
     if (calc_omega_p) {
       out$omega_p <- 0.8
     } else {
-      out$omega <- 0.6
+      out$omega   <- 0.6
       out$omega_1 <- 0.8
     }
+    
   } else {
-    out <- data.frame(alpha_b = 1,
-                      alpha_l = rlnorm(n, 12, 3),
-                      beta_b = rbeta(n, 3, 6),
-                      beta_l = rbeta(n, 3, 6))
+    # Generate mode
+    out <- data.frame(row.names = seq_len(n))
+    
+    # Add alpha/beta only for relevant modalities
+    for (m in modalities) {
+      initial <- substring(m, 1, 1)
+      if("bright" %in% modalities){
+        out[[paste0("alpha_", initial)]] <- switch(m,
+                                                   bright = rep(1, n),
+                                                   loud   = rlnorm(n, 12, 3),
+                                                   strong = rlnorm(n, 12, 3))
+      }else{
+        out[[paste0("alpha_", initial)]] <- switch(m,
+                                                   loud   = rlnorm(n, 12, 3),
+                                                   strong = rep(1, n))
+      }
+      
+      out[[paste0("beta_", initial)]] <- switch(m,
+                                                bright = rbeta(n, 3, 6),
+                                                loud   = rbeta(n, 3, 6),
+                                                strong = rbeta(n, 3, 6))
+    }
+    
+    std <- substring(standard_modality, 1, 1)
+    tgt <- substring(target_modality,   1, 1)
+    
     if (restriction == "no") {
-      out$rho_btol <- runif(n, 50, 90)
-      out$rho_lfromb <- runif(n, 0, 80)
-      out$rho_ltob <- runif(n, 0, 80)
-      out$rho_bfroml <- runif(n, 50, 90)
+      out[[paste0("rho_", std, "to", tgt)]]   <- switch(standard_modality,
+                                                    bright = runif(n, 0, 80),
+                                                    loud   = runif(n, 50, 90),
+                                                    strong = runif(n, 50, 90))
+      
+      out[[paste0("rho_", tgt, "from", std)]] <- switch(target_modality,
+                                                    bright = runif(n, 0, 80),
+                                                    loud   = runif(n, 50, 90),
+                                                    strong = runif(n, 50, 90))
+      out[[paste0("rho_", tgt, "to", std)]]   <- switch(target_modality,
+                                                    bright = runif(n, 0, 80),
+                                                    loud   = runif(n, 50, 90),
+                                                    strong = runif(n, 50, 90))
+      out[[paste0("rho_", std, "from", tgt)]] <- switch(standard_modality,
+                                                    bright = runif(n, 0, 80),
+                                                    loud   = runif(n, 50, 90),
+                                                    strong = runif(n, 50, 90))
     }
     if (restriction == "role-independent") {
-      out$rho_b <- runif(n, 50, 90)
-      out$rho_l <- runif(n, 0, 80)
+      for (m in modalities) {
+        out[[paste0("rho_", substring(m, 1, 1))]] <- switch(m,
+                                                    bright = runif(n, 0, 80),
+                                                    loud   = runif(n, 50, 90),
+                                                    strong = runif(n, 50, 90))
+      }
     }
     if (restriction == "const") {
-      out$const_bl <- runif(n, 100, 180)
-      out$const_lb <- runif(, 0, 160)
+      # If-loop only to preserve old runif range for lb
+      if(paste0(std, tgt) == "lb"){
+        out$const_lb <- runif(n, 0, 160)
+      }else{
+        out[[paste0("const_", std, tgt)]] <- runif(n, 100, 180)  
+      }
     }
     if (calc_omega_p) {
-      out$omega_p <- rnorm(n, 1, .3)
+      out$omega_p <- rnorm(n, 1,   .3)
     } else {
-      out$omega <- rnorm(n, 0.6, .05)
+      out$omega   <- rnorm(n, 0.6, .05)
       out$omega_1 <- rnorm(n, 0.8, .1)
     }
   }
@@ -72,8 +155,8 @@ create_param_set <- function(n = 1,
 #'
 #' @param standards A vector of numbers representing the physical intensities 
 #'                  of standard stimuli (in dB).
-#' @param task A character string, either "bright_loud" or "loud_bright" 
-#'             indicating the task.
+#' @param task String indicating the task, e.g "bright_loud", "loud_bright", 
+#' "strong_loud", "bright_strong", etc.
 #' @param param A named vector of numbers representing the model parameters.
 #' @param p An integer (default: 1) representing the production ratio to be used.
 #' @returns A vector of predicted physical intensities.
@@ -83,77 +166,59 @@ create_param_set <- function(n = 1,
 #' y_loud <- predict_gpm(c(69, 73, 77, 85), "bright_loud", param)
 #' @export
 predict_gpm <- function(standards, task, param, p = 1) {
-  if ("omega_1" %in% names(param)) {
-    omega_1 <- param$omega_1
-  } else {
-    omega_1 <- NULL 
-  }
-  if ("omega_p" %in% names(param)) {
-    omega_p <- param$omega_p
-  } else {
-    omega_p <- NULL
-  }
-  if ("omega" %in% names(param)) {
-    omega <- param$omega
-  } else {
-    omega <- NULL 
-  }
   
-  if (!is.null(param$rho_bfroml) & !is.null(param$rho_lfromb) & 
-      !is.null(param$rho_ltob) & !is.null(param$rho_btol)) {
+  std <- substring(sub("_.*", "", task), 1, 1)
+  tgt <- substring(sub(".*_", "", task), 1, 1)
+  
+  # Extract omega parameters
+  omega_1 <- param$omega_1 %||% NULL
+  omega_p <- param$omega_p %||% NULL
+  omega   <- param$omega   %||% NULL
+  
+  # Determine rho/const based on restriction type
+  rho_std_col   <- paste0("rho_", std, "to", tgt)
+  rho_tgt_col   <- paste0("rho_", tgt, "from", std)
+  rho_std_ri    <- paste0("rho_", std)
+  rho_tgt_ri    <- paste0("rho_", tgt)
+  const_col     <- paste0("const_", std, tgt)
+  
+  if (!is.null(param[[rho_std_col]]) & !is.null(param[[rho_tgt_col]])) {
     # in case of role-dependence
-    if (task == "bright_loud"){
-      rho_std <- param$rho_btol
-      rho_tgt <- param$rho_lfromb
-    } else {
-      rho_std <- param$rho_ltob
-      rho_tgt <- param$rho_bfroml
-    }
-  } else if (!is.null(param$rho_b) & !is.null(param$rho_l)) {
+    rho_std <- param[[rho_std_col]]
+    rho_tgt <- param[[rho_tgt_col]]
+    const   <- NULL
+  } else if (!is.null(param[[rho_std_ri]]) & !is.null(param[[rho_tgt_ri]])) {
     # in case of role-independence
-    if(task == "bright_loud") {
-      rho_std <- param$rho_b
-      rho_tgt <- param$rho_l
-    } else {
-      rho_std <- param$rho_l
-      rho_tgt <- param$rho_b
-    }
-  } else if (!is.null(param$const_lb) & !is.null(param$const_bl)) {
-    rho_std = NULL
-    rho_tgt = NULL
-    if (task == "bright_loud") {
-      const = param$const_bl
-    } else {
-      const = param$const_lb
-    }
+    rho_std <- param[[rho_std_ri]]
+    rho_tgt <- param[[rho_tgt_ri]]
+    const   <- NULL
+  } else if (!is.null(param[[const_col]])) {
+    rho_std <- NULL
+    rho_tgt <- NULL
+    const   <- param[[const_col]]
   } else {
-    stop("Provide parameter values for either
-         role-dependence reference parameters (rho_btol, rho_bfroml, rho_ltob,
-                                               and rho_ltob);
-         role-independence (rho_l and rho_b), or 
-         constant sum (const_lb and const_bl)")
+    stop(glue::glue(
+      "No valid parameters found for task '{task}'. Provide one of:
+       - role-dependent: {rho_std_col} and {rho_tgt_col}
+       - role-independent: {rho_std_ri} and {rho_tgt_ri}
+       - constant sum: {const_col}"
+    ))
   }
   
-  if (task == "bright_loud"){
-    alpha_std <- param$alpha_b
-    alpha_tgt <- param$alpha_l
-    beta_std <- param$beta_b
-    beta_tgt <- param$beta_l
-  } else {
-    alpha_std <- param$alpha_l
-    alpha_tgt <- param$alpha_b
-    beta_std <- param$beta_l
-    beta_tgt <- param$beta_b
-  }
-
+  # Extract alpha/beta by modality
+  alpha_std <- param[[paste0("alpha_", std)]]
+  alpha_tgt <- param[[paste0("alpha_", tgt)]]
+  beta_std  <- param[[paste0("beta_",  std)]]
+  beta_tgt  <- param[[paste0("beta_",  tgt)]]
+  
   gpm_multiple_p(standard_intensity = standards,
-              alpha_std = alpha_std, alpha_tgt = alpha_tgt,
-              beta_std = beta_std, beta_tgt = beta_tgt,
-              p = as.numeric(p), 
-              omega_1 = omega_1, omega = omega, omega_p = omega_p,
-              rho_std = rho_std, rho_tgt = rho_tgt,
-              const = const,
-              task = task)
+                 alpha_std = alpha_std, alpha_tgt = alpha_tgt,
+                 beta_std  = beta_std,  beta_tgt  = beta_tgt,
+                 p = as.numeric(p),
+                 omega_1 = omega_1, omega = omega, omega_p = omega_p,
+                 rho_std = rho_std, rho_tgt = rho_tgt,
+                 const   = const,
+                 task    = task)
 }
 
 #' Simulate a magnitude production data set for both tasks and one or more
@@ -165,7 +230,8 @@ predict_gpm <- function(standards, task, param, p = 1) {
 #'
 #' @param ntrials A number of trials per condition.
 #' @param cond A data frame with columns:
-#'        - task: factor with values "loud_bright" or "bright_loud"
+#'        - task: factor indicating the task, e.g "bright_loud", "loud_bright", 
+#'                "strong_loud", "bright_strong", etc.
 #'        - std: numeric values representing standard intensities
 #'        - sigma: standard deviation for adding noise to predictions
 #'        - p: production ratio values
@@ -246,34 +312,39 @@ simulate_gpm <- function(ntrials, cond, param) {
   }
   cond$mu <- mu_values
   
-  # Create output data frame with replicated rows for trials
   out <- cond[rep(seq_len(nrow(cond)), each = ntrials), ]
+  
+  # Define sensible fallback mu per target modality
+  fallback_mu <- list(
+    loud   = 15,   # dB SPL
+    bright = 52,   # dB Lambert
+    strong = 5     # dB displacement 
+  )
   
   # Check for invalid mu values
   invalid_mu <- is.na(out$mu) | is.infinite(out$mu)
-  if(any(invalid_mu)){
+  if (any(invalid_mu)) {
     message("--- BEFORE ---")
-    print(head(out[invalid_mu,]))
-    warning(paste(sum(invalid_mu), "invalid mu values detected and",
-                  "set to 52 (dB Lambert) or 15 (dB SPL).",
+    print(head(out[invalid_mu, ]))
+    
+    # Get target modality for each row and look up fallback
+    tgt_modality <- sub(".*_", "", as.character(out$task))
+    fb <- unlist(fallback_mu[tgt_modality])
+    
+    warning(paste(sum(invalid_mu), "invalid mu values detected and replaced",
+                  "with modality-specific fallback values.",
                   "Check your predict_gpm function outputs."))
-
-    out$mu <- ifelse(
-      out$task == "loud_bright" & (invalid_mu | out$mu < 52),
-        52,
-        ifelse(out$task == "bright_loud" & (invalid_mu | out$mu < 15),
-          15,
-          out$mu)
-    )
+    
+    out$mu <- ifelse(invalid_mu, fb, out$mu)
+    
     message("--- AFTER ---")
-    print(head(out[invalid_mu,]))
+    print(head(out[invalid_mu, ]))
   }
   
   # Check for invalid sigma values
-  invalid_sigma <- (is.na(out$sigma) | out$sigma < 0)
-  if(any(invalid_sigma)){
-    warning(paste(sum(invalid_sigma), "invalid sigma values detected and", 
-                  "set to 1."))
+  invalid_sigma <- is.na(out$sigma) | out$sigma < 0
+  if (any(invalid_sigma)) {
+    warning(paste(sum(invalid_sigma), "invalid sigma values detected and set to 1."))
     out$sigma[invalid_sigma] <- 1
   }
   

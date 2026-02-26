@@ -147,11 +147,11 @@ gpm <- function(standard_intensity,
   }
   
   if(standard_modality == "loud"){
-    db_inv_tgt <- db_inv_lambert
+    db_inv_std <- db_inv_spl
   }else if(standard_modality == "bright"){
     db_inv_std <- db_inv_lambert
   }else if(standard_modality == "strong"){
-    db_inv_tgt <- db_inv_disp
+    db_inv_std <- db_inv_disp
   }
   
   if (!(is.null(rho_std) & is.null(rho_tgt))) {
