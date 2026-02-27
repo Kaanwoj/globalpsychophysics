@@ -236,10 +236,16 @@ predict_gpm <- function(standards, task, param, p = 1) {
 #'        - sigma: standard deviation for adding noise to predictions
 #'        - p: production ratio values
 #' @param param A named vector of numbers representing the model parameters:
-#'                alpha_b, alpha_l, beta_b, beta_l,
-#'                omega_p or omega_1 and omega (if omega_p should be calculated) 
-#'                rho_btol, rho_lfromb, rho_ltob, rho_bfroml if role-dependece 
-#'                or rho_b and rho_l if role-independece is assumed
+#'        alpha_b, alpha_l, beta_b, beta_l, omega_p or omega_1 and omega (if
+#'        omega_p should be calculated) rho_btol, rho_lfromb, rho_ltob,
+#'        rho_bfroml if role-dependece or rho_b and rho_l if role-independece
+#'        is assumed
+#' @param replace_invalid Boolean, whether to replace simulated values that are
+#'        invalid (NaN or Inf) with fallback values (loud = 15 dB SPL, bright =
+#'        52 dB Lambert, strong = 5 dB displacement; TRUE, default) or to leave
+#'        them in the simulated data (FALSE)
+#' @param print_invalid Boolean, whether to print rows of simulated data that
+#'        contain invalid values (TRUE, default).
 #' @returns A data frame with ntrials rows per condition, containing columns:
 #'          task, std, sigma, p, mu (predicted value), and tgt (noisy response).
 #' @examples
@@ -273,7 +279,8 @@ predict_gpm <- function(standards, task, param, p = 1) {
 #' 
 #' simulated_data <- simulate_gpm(200, cond_multi_p, param)
 #' @export
-simulate_gpm <- function(ntrials, cond, param) {
+simulate_gpm <- function(ntrials, cond, param, replace_invalid = TRUE,
+                         print_invalid = TRUE) {
   cond$task <- factor(cond$task, levels = unique(cond$task))
   
   # Group by unique combination of task and p
@@ -324,21 +331,30 @@ simulate_gpm <- function(ntrials, cond, param) {
   # Check for invalid mu values
   invalid_mu <- is.na(out$mu) | is.infinite(out$mu)
   if (any(invalid_mu)) {
-    message("--- BEFORE ---")
-    print(head(out[invalid_mu, ]))
+    if (print_invalid) {
+      message("--- BEFORE ---")
+      print(head(out[invalid_mu, ]))
+    }
     
-    # Get target modality for each row and look up fallback
-    tgt_modality <- sub(".*_", "", as.character(out$task))
-    fb <- unlist(fallback_mu[tgt_modality])
+    if (replace_invalid) {
+      # Get target modality for each row and look up fallback
+      tgt_modality <- sub(".*_", "", as.character(out$task))
+      fb <- unlist(fallback_mu[tgt_modality])
+
+      # replace invalid mu values with fallback
+      out$mu <- ifelse(invalid_mu, fb, out$mu)
+      warning(paste(sum(invalid_mu), "invalid mu values detected and replaced",
+                    "with modality-specific fallback values.",
+                    "Check your predict_gpm function outputs."))
+    } else {
+      warning(paste(sum(invalid_mu), "invalid mu values detected and left",
+                    "in simulated data. This will produce NAs in rnorm."))
+    }
     
-    warning(paste(sum(invalid_mu), "invalid mu values detected and replaced",
-                  "with modality-specific fallback values.",
-                  "Check your predict_gpm function outputs."))
-    
-    out$mu <- ifelse(invalid_mu, fb, out$mu)
-    
-    message("--- AFTER ---")
-    print(head(out[invalid_mu, ]))
+    if (print_invalid) {
+      message("--- AFTER ---")
+      print(head(out[invalid_mu, ]))
+    }
   }
   
   # Check for invalid sigma values
