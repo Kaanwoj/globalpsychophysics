@@ -2,6 +2,8 @@
 
 export(const_fun)
 export(create_param_set)
+export(db_disp)
+export(db_inv_disp)
 export(db_inv_lambert)
 export(db_inv_spl)
 export(db_lambert)

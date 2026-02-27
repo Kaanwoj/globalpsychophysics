@@ -5,22 +5,37 @@
 \title{Simulate a magnitude production data set for both tasks and one or more
 production ratios}
 \usage{
-simulate_gpm(ntrials, cond, param)
+simulate_gpm(
+  ntrials,
+  cond,
+  param,
+  replace_invalid = TRUE,
+  print_invalid = TRUE
+)
 }
 \arguments{
 \item{ntrials}{A number of trials per condition.}
 
 \item{cond}{A data frame with columns:
-- task: factor with values "loud_bright" or "bright_loud"
+- task: factor indicating the task, e.g "bright_loud", "loud_bright",
+"strong_loud", "bright_strong", etc.
 - std: numeric values representing standard intensities
 - sigma: standard deviation for adding noise to predictions
 - p: production ratio values}
 
 \item{param}{A named vector of numbers representing the model parameters:
-alpha_b, alpha_l, beta_b, beta_l,
-omega_p or omega_1 and omega (if omega_p should be calculated)
-rho_btol, rho_lfromb, rho_ltob, rho_bfroml if role-dependece
-or rho_b and rho_l if role-independece is assumed}
+alpha_b, alpha_l, beta_b, beta_l, omega_p or omega_1 and omega (if
+omega_p should be calculated) rho_btol, rho_lfromb, rho_ltob,
+rho_bfroml if role-dependece or rho_b and rho_l if role-independece
+is assumed}
+
+\item{replace_invalid}{Boolean, whether to replace simulated values that are
+invalid (NaN or Inf) with fallback values (loud = 15 dB SPL, bright =
+52 dB Lambert, strong = 5 dB displacement; TRUE, default) or to leave
+them in the simulated data (FALSE)}
+
+\item{print_invalid}{Boolean, whether to print rows of simulated data that
+contain invalid values (TRUE, default).}
 }
 \value{
 A data frame with ntrials rows per condition, containing columns:

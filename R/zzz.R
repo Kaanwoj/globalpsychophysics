@@ -1,6 +1,6 @@
 .onLoad <- function(libname, pkgname) {
   # Check for required packages silently
-  required_packages <- c("rstan", "rstantools")
+  required_packages <- c("rstan", "rstantools", "ggplot2")
   
   missing_packages <- character(0)
   for (pkg in required_packages) {

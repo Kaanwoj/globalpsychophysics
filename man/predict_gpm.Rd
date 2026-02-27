@@ -10,8 +10,8 @@ predict_gpm(standards, task, param, p = 1)
 \item{standards}{A vector of numbers representing the physical intensities
 of standard stimuli (in dB).}
 
-\item{task}{A character string, either "bright_loud" or "loud_bright"
-indicating the task.}
+\item{task}{String indicating the task, e.g "bright_loud", "loud_bright",
+"strong_loud", "bright_strong", etc.}
 
 \item{param}{A named vector of numbers representing the model parameters.}
 

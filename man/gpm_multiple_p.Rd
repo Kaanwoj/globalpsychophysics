@@ -56,7 +56,8 @@ the target dimension.}
 \item{const}{A number representing the sum of rho's in the restricted model
 for matching / p=1 only.}
 
-\item{task}{Either "bright_loud" or "loud_bright" indicating the task.}
+\item{task}{String indicating the task, e.g "bright_loud", "loud_bright",
+"strong_loud", "bright_strong", etc.}
 }
 \value{
 A number or vector representing the physical intensity predicted by
