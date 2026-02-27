@@ -36,7 +36,8 @@ of the standard.}
 \item{beta_tgt}{A number for the parameter of the psychophysical function
 of the target.}
 
-\item{p}{An integer (1, 2, or 3) representing the production ratio to be used.}
+\item{p}{An integer (1, 2, or 3) representing the production ratio to be
+used.}
 
 \item{omega_1}{A number representing the weight parameter for the weighting
 function.}
@@ -61,14 +62,14 @@ for matching / p=1 only.}
 }
 \value{
 A number or vector representing the physical intensity predicted by
-the global psychophysics model, with names reflecting the production
-ratio used.
+the global psychophysics model, with names reflecting the
+production ratio used.
 }
 \description{
 This function extends the global psychophysics model function (gpm) by
 allowing calculation of model predictions for a specific production ratio
-(p). It handles the weighting calculation internally and provides appropriate
-naming of results based on the production ratio used.
+(p). It handles the weighting calculation internally and provides
+appropriate naming of results based on the production ratio used.
 }
 \examples{
 # Calculate prediction for brightness-to-loudness with production ratio p=2

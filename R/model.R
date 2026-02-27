@@ -127,14 +127,14 @@ gpm <- function(standard_intensity,
                 omega_p,
                 rho_std = NULL, rho_tgt = NULL, const = NULL,
                 task = c("bright_loud", "loud_bright")) {
-  
+
   # Set alpha_b reliable to 1, i.e. alpha, that is not given as argument
   if (is.null(alpha_std) || length(alpha_std) == 0) alpha_std <- 1
   if (is.null(alpha_tgt) || length(alpha_tgt) == 0) alpha_tgt <- 1
-  
+
   standard_modality <- strsplit(task, "_")[[1]][1]
   target_modality <- strsplit(task, "_")[[1]][2]
-  
+
   if(target_modality == "loud"){
     db_inv_tgt <- db_inv_spl
     db_tgt <- db_spl
@@ -145,7 +145,7 @@ gpm <- function(standard_intensity,
     db_inv_tgt <- db_inv_disp
     db_tgt <- db_disp
   }
-  
+
   if(standard_modality == "loud"){
     db_inv_std <- db_inv_spl
   }else if(standard_modality == "bright"){
@@ -153,7 +153,7 @@ gpm <- function(standard_intensity,
   }else if(standard_modality == "strong"){
     db_inv_std <- db_inv_disp
   }
-  
+
   if (!(is.null(rho_std) & is.null(rho_tgt))) {
     const <- const_fun(omega_p, rho_std, db_inv_std, alpha_std, beta_std,
                        rho_tgt, db_inv_tgt, alpha_tgt, beta_tgt)
@@ -170,14 +170,14 @@ gpm <- function(standard_intensity,
     stats::setNames(rep("x_p", length(standard_intensity)))
 }
 
-#' Calculate global psychophysics model prediction 
+#' Calculate global psychophysics model prediction
 #'
 #' @description
-#' This function extends the global psychophysics model function (gpm) by 
-#' allowing calculation of model predictions for a specific production ratio 
-#' (p). It handles the weighting calculation internally and provides appropriate 
-#' naming of results based on the production ratio used.
-#' 
+#' This function extends the global psychophysics model function (gpm) by
+#' allowing calculation of model predictions for a specific production ratio
+#' (p). It handles the weighting calculation internally and provides
+#' appropriate naming of results based on the production ratio used.
+#'
 #' @param standard_intensity A number or vector representing the physical
 #'        intensity/ies of the standard stimulus/stimuli (in dB).
 #' @param alpha_std A number for the parameter of the psychophysical function
@@ -188,12 +188,13 @@ gpm <- function(standard_intensity,
 #'        of the standard.
 #' @param beta_tgt A number for the parameter of the psychophysical function
 #'        of the target.
-#' @param p An integer (1, 2, or 3) representing the production ratio to be used.
-#' @param omega_1 A number representing the weight parameter for the weighting 
+#' @param p An integer (1, 2, or 3) representing the production ratio to be
+#'        used.
+#' @param omega_1 A number representing the weight parameter for the weighting
 #'            function.
-#' @param omega A number representing the exponent in the weighting function. 
+#' @param omega A number representing the exponent in the weighting function.
 #'          Default is 0.6.
-#' @param omega_p A direct specification of the weighted production ratio. 
+#' @param omega_p A direct specification of the weighted production ratio.
 #'        If omega_1 and omega are given, this will be ignored.
 #' @param rho_std A number for the internal reference parameter pertaining to
 #'        the standard dimension.
@@ -201,12 +202,12 @@ gpm <- function(standard_intensity,
 #'        the target dimension.
 #' @param const A number representing the sum of rho's in the restricted model
 #'        for matching / p=1 only.
-#' @param task String indicating the task, e.g "bright_loud", "loud_bright", 
+#' @param task String indicating the task, e.g "bright_loud", "loud_bright",
 #' "strong_loud", "bright_strong", etc.
 #'
 #' @returns A number or vector representing the physical intensity predicted by
-#'          the global psychophysics model, with names reflecting the production 
-#'          ratio used.
+#'          the global psychophysics model, with names reflecting the
+#'          production ratio used.
 #'
 #' @examples
 #' # Calculate prediction for brightness-to-loudness with production ratio p=2
@@ -218,19 +219,19 @@ gpm <- function(standard_intensity,
 #'                task = "bright_loud")
 #' @export
 gpm_multiple_p <- function(standard_intensity,
-                        alpha_std, alpha_tgt,
-                        beta_std, beta_tgt,
-                        p, omega_1 = NULL, omega = NULL, omega_p = NULL,
-                        rho_std = NULL, rho_tgt = NULL, const = NULL,
-                        task = c("bright_loud", "loud_bright")) {
-  
+                           alpha_std, alpha_tgt,
+                           beta_std, beta_tgt,
+                           p, omega_1 = NULL, omega = NULL, omega_p = NULL,
+                           rho_std = NULL, rho_tgt = NULL, const = NULL,
+                           task = c("bright_loud", "loud_bright")) {
+
   # Validate production factor p
   if (length(p) > 1)
     stop("Production factor p not valid, must be a single integer, either 1, 2,
          or 3")
   if (!(p %in% 1:3))
     stop("Production factor p not valid, must be 1, 2, or 3")
-  
+
   # Calculate omega_p based on p, omega_1, and omega
   if (!is.null(omega_1) && !is.null(omega)) {
     omega_p <- weigh_fun(p, omega_1, omega)
@@ -240,48 +241,67 @@ gpm_multiple_p <- function(standard_intensity,
       stopifnot("if omega_p is a vector, it must be named with the 
                 production factors p given as argument p" = !is.na(omega_p))
     } else {
-    omega_p <- omega_p
+      omega_p <- omega_p
     }
   } else if (!is.null(omega_1) && p == 1) {
     omega_p <- omega_1
   } else {
     stop("Either omega_p or both omega_1 and omega must be provided")
   }
-  
+
   # Call the original gpm function with calculated omega_p
   result <- gpm(standard_intensity = standard_intensity,
                 alpha_std = alpha_std, alpha_tgt = alpha_tgt,
                 beta_std = beta_std, beta_tgt = beta_tgt,
-                omega_p = omega_p, 
-                rho_std = rho_std, rho_tgt = rho_tgt, 
+                omega_p = omega_p,
+                rho_std = rho_std, rho_tgt = rho_tgt,
                 const = const,
                 task = task)
-  
+
   names(result) <- rep(paste0("x_", p), length(result))
-  
+
   return(result)
 }
 
-#' Dependence of rho parameters on constant in case of only p=1 
+#' Calcuate rho_lfromb given const_bl and rho_btol
+#' Dependence of rho parameters on constant in case of only p=1
 #' (H function, Heller, 2021)
-# H_bl(rho_b->l) = rho_l<-b
+#'
+#' @param rho_sbl A intensity in luminance unit (dB Lambert) representing the
+#'        internal brightness reference for the standard
+#' @param param A vector of parameter values for the global psychophysical
+#'        model containing const_bl, omega_1, alpha_l, beta_l, and beta_b
+#' @returns A number representing the internal loudness reference for the
+#'        target
+#' @export
 const_inv_std <- function(rho_sbl, param) {
   alpha_b <- 1
   with(param,
     db_spl(
-      psi_inv(- const_bl + omega_1 * psi(db_inv_lambert(rho_sbl), alpha_b, beta_b),
-              alpha_l, beta_l)
+      psi_inv(
+        - const_bl + omega_1 * psi(db_inv_lambert(rho_sbl), alpha_b, beta_b),
+          alpha_l, beta_l)
     )
   )
 }
 
-# H_lb(rho_b<-l) = rho_l->b
+#' Calcuate rho_ltob given const_lb and rho_bfroml
+#' Dependence of rho parameters on constant in case of only p=1
+#' (H function, Heller, 2021)
+#'
+#' @param rho_clb A intensity in luminance unit (dB Lambert) representing the
+#'        internal brightness reference for the target
+#' @param param A vector of parameter values for the global psychophysical
+#'        model containing const_lb, omega_1, alpha_l, beta_l, and beta_b
+#' @returns A number representing the internal loudness reference for the
+#'        standard
+#' @export
 const_inv_tgt <- function(rho_clb, param) {
   alpha_b <- 1
   with(param,
     db_spl(
       (1 / (omega_1 * alpha_l) *
-       (const_lb + alpha_b * db_inv_lambert(rho_clb)^beta_b))^(1 / beta_l)
+        (const_lb + alpha_b * db_inv_lambert(rho_clb)^beta_b))^(1 / beta_l)
     )
   )
 }
