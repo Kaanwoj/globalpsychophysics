@@ -10,15 +10,21 @@ create_param_set <- function(n = 1,
                              calc_omega_p = FALSE,
                              task = c("bright_loud", "loud_bright",
                                       "strong_loud", "loud_strong",
-                                      "bright_strong", "strong_bright")){
-  
+                                      "bright_strong", "strong_bright",
+                                      "bright_bright", "loud_loud",
+                                      "strong_strong"),
+                             standard_modality = NULL,
+                             target_modality = NULL){
   method      <- match.arg(method, choices = c("existing", "generate"))
   restriction <- match.arg(restriction, choices = c("no", "role-independent", 
                                                     "const"))
   task        <- match.arg(task)
   
-  standard_modality <- sub("_.*", "", task)
-  target_modality   <- sub(".*_", "", task)
+  # TODO more stable check that task is one string
+  if(is.null(standard_modality) | is.null(target_modality)){
+    standard_modality <- sub("_.*", "", task)
+    target_modality   <- sub(".*_", "", task)
+  }
   modalities        <- unique(c(standard_modality, target_modality))
   
   if (method == "existing") {
