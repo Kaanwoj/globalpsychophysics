@@ -9,7 +9,7 @@ options(mc.cores = parallel::detectCores())
 #' @param ntrials number of trials per standard.
 #' @returns
 #' @export
-make_datlist_old <- function(data, ntrials) {
+make_datlist <- function(data, ntrials) {
 
   # check standard ------------------------------------------------------------
   if (!"std" %in% names(data)) {
@@ -178,7 +178,7 @@ make_datlist_old <- function(data, ntrials) {
 #'
 #' @export
 
-make_datlist <- function(
+make_datlist_generic <- function(
     dat = NULL,          # real data frame from data files
     cond = NULL,         # expand.grid-style conditions frame
     prior_params = list(),        # named list/vector of prior parameters
@@ -192,9 +192,9 @@ make_datlist <- function(
   # --- 1. Modality string -> integer mapping --------------------------------
   modality_to_int <- function(x) {
     case_when(
-      x == "auditory" | x == "loud"    ~ 1L,
-      x == "visual"   | x == "bright"  ~ 2L,
-      x == "tactile"  | x == "strong"  ~ 3L
+      x == "auditory" | x == "loud"    ~ 1,
+      x == "visual"   | x == "bright"  ~ 2,
+      x == "tactile"  | x == "strong"  ~ 3
     )
   }
   
