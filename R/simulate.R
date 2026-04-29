@@ -290,7 +290,7 @@ simulate_gpm <- function(ntrials, cond, param, replace_invalid = TRUE,
   cond$task <- factor(cond$task, levels = unique(cond$task))
   
   # Group by unique combination of task and p
-  cond_split <- split(cond, list(cond$task, cond$p))
+  cond_split <- split(cond, list(cond$task, cond$p), drop = TRUE)
   
   predictions <- lapply(cond_split, function(x) {
     # Each group has the same task and p value

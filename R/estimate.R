@@ -278,8 +278,9 @@ make_datlist_generic <- function(
   }
   
   # --- Fill in unused priors with default ----------------------------------
-  default_prior_params <- read.table("default_priors.csv", 
-                                     header = TRUE, sep = ";") %>%
+  priors_path <- file.path(find.package("globalpsychophysics"), 
+                           "data", "default_priors.csv")
+  default_prior_params <- read.csv(priors_path, sep = ";") %>%
     (\(x) setNames(as.list(x$value), x$parname))()
   
   resolved_params <- modifyList(default_prior_params, prior_params)
