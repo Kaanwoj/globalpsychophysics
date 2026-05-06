@@ -10,7 +10,6 @@ options(mc.cores = parallel::detectCores())
 #' @returns
 #' @export
 make_datlist <- function(data, ntrials) {
-
   # check standard ------------------------------------------------------------
   if (!"std" %in% names(data)) {
     if ("standard_db" %in% names(data)) {
@@ -21,14 +20,15 @@ make_datlist <- function(data, ntrials) {
       stop("column 'standard', 'standard_db' or 'std' is missing in data")
     }
   }
-  
+
   # sort by p and then by std -------------------------------------------------
-  if ("p" %in% names(data)) {   # multiple production factors
+  if ("p" %in% names(data)) {
+    # multiple production factors
     data <- sort_by(data, ~ p + std)
   } else {
-    data <- sort_by(data, ~ std)
+    data <- sort_by(data, ~std)
   }
-  
+
   # check match ---------------------------------------------------------------
   if (!"tgt" %in% names(data)) {
     if ("match_db" %in% names(data)) {
@@ -67,22 +67,30 @@ make_datlist <- function(data, ntrials) {
     std_bl = std_bl
   )
 
-  if ("p" %in% names(data)) {   # multiple production factors
+  if ("p" %in% names(data)) {
+    # multiple production factors
     datlist$np <- length(unique(data$p))
     datlist$p <- unique(data$p)
-    datlist$std_p_lb <- as.numeric(interaction(dat_lb$p, dat_lb$std,
-                                               lex.order = TRUE))
-    datlist$std_p_bl <- as.numeric(interaction(dat_bl$p, dat_bl$std,
-                                               lex.order = TRUE))
+    datlist$std_p_lb <- as.numeric(interaction(
+      dat_lb$p,
+      dat_lb$std,
+      lex.order = TRUE
+    ))
+    datlist$std_p_bl <- as.numeric(interaction(
+      dat_bl$p,
+      dat_bl$std,
+      lex.order = TRUE
+    ))
     datlist$nstd_p_lb <- length(datlist$std_bl) * datlist$np
     datlist$nstd_p_bl <- length(datlist$std_lb) * datlist$np
-   #datlist$tgt_lb <- dat_lb$tgt
-   #datlist$tgt_bl <- dat_bl$tgt
+    #datlist$tgt_lb <- dat_lb$tgt
+    #datlist$tgt_bl <- dat_bl$tgt
     datlist$tgt <- data$tgt
     datlist$sig_lb <- aggregate(tgt ~ std + p, dat_lb, sd)$tgt
     datlist$sig_bl <- aggregate(tgt ~ std + p, dat_bl, sd)$tgt
-   #datlist$sig <- aggregate(tgt ~ std + p + task, data, sd)$tgt
-  } else {                      # matching
+    #datlist$sig <- aggregate(tgt ~ std + p + task, data, sd)$tgt
+  } else {
+    # matching
     datlist$std_lb_idx <- as.numeric(as.factor(dat_lb$std))
     datlist$std_bl_idx <- as.numeric(as.factor(dat_bl$std))
     datlist$tgt_lb <- dat_lb$tgt
@@ -113,13 +121,13 @@ make_datlist <- function(data, ntrials) {
 #'   forced to \code{1}. If \code{NULL}, \code{dat} must be provided.
 #' @param prior_params A named list of prior hyperparameters to pass to Stan,
 #'   e.g. \code{list(alpha_l_logmu = 4, alpha_l_logsigma = 0.3)}. Any
-#'   parameters not supplied are filled from \code{default_priorset.csv}. 
-#'   Defaults to an empty list, in which case
-#'   all priors come from the defaults.
-#' @param onlyprior Integer, \code{0} or \code{1}. If \code{1}, the likelihood
-#'   is skipped in Stan (prior predictive mode) and \code{tgt} is set to zeros
-#'   regardless of whether \code{dat} is provided. Automatically set to
-#'   \code{1} when only \code{cond} is given. Default \code{0}.
+#'   parameters not supplied are filled from
+#'   \code{globalpsychophysics::default_gpm_priors}. Defaults to an empty list,
+#'   in which case all priors come from the defaults.
+#' @param onlyprior Integer, \code{0} (default) or \code{1}. If \code{1},
+#'   \code{tgt} is set to zeros regardless of whether \code{dat} is provided
+#'   and the likelihood will be skipped in Stan (prior predictive mode).
+#'   Automatically set to \code{1} when only \code{cond} is given.
 #' @param sigidx An optional integer vector of length \code{nrow(dat)} or
 #'   \code{nrow(cond)} mapping each trial to a sigma parameter index. If
 #'   \code{NULL} (default), the function checks for a \code{sigidx} column
@@ -132,7 +140,7 @@ make_datlist <- function(data, ntrials) {
 #' \strong{Modality encoding:} Modalities are encoded as integers:
 #' \code{1} = loudness (auditory), \code{2} = brightness (visual),
 #' \code{3} = vibration strength (tactile). The function accepts either a
-#' \code{task} column with strings like \code{"loud_bright"} or separate
+#' \code{task} column with strings like \code{"loud_bright"}, or separate
 #' \code{standard_modality} and \code{target_modality} columns with strings
 #' \code{"auditory"}/\code{"loud"}, \code{"visual"}/\code{"bright"},
 #' \code{"tactile"}/\code{"strong"}.
@@ -158,7 +166,7 @@ make_datlist <- function(data, ntrials) {
 #'   expand.grid(task = "loud_bright", std = c(25, 34, 43, 52, 61, 70), p = 1:3),
 #'   expand.grid(task = "bright_loud", std = c(61, 63, 67, 72, 76, 81), p = 1:3)
 #' )
-#' datlist <- make_datlist(cond = cond)
+#' datlist <- make_datlist(data = cond)
 #'
 #' # Real data with custom prior set
 #' prior_sets <- read.table("priorsets.csv", header = TRUE, sep = ";")
@@ -179,44 +187,46 @@ make_datlist <- function(data, ntrials) {
 #' @export
 
 make_datlist_generic <- function(
-    dat = NULL,          # real data frame from data files
-    cond = NULL,         # expand.grid-style conditions frame
-    prior_params = list(),        # named list/vector of prior parameters
-    onlyprior = 0,
-    sigidx = NULL,
-    tgt_col = "matchdb"
+  dat = NULL, # real data frame from data files
+  cond = NULL, # expand.grid-style conditions frame
+  prior_params = list(), # named list/vector of prior parameters
+  onlyprior = 0,
+  sigidx = NULL,
+  tgt_col = "matchdb"
 ) {
-  
   library(dplyr)
-  
+
   # --- 1. Modality string -> integer mapping --------------------------------
   modality_to_int <- function(x) {
     case_when(
-      x == "auditory" | x == "loud"    ~ 1,
-      x == "visual"   | x == "bright"  ~ 2,
-      x == "tactile"  | x == "strong"  ~ 3
+      x == "auditory" | x == "loud" ~ 1,
+      x == "visual" | x == "bright" ~ 2,
+      x == "tactile" | x == "strong" ~ 3
     )
   }
-  
+
   # --- 2. Resolve which data frame we're working with ----------------------
   # cond path: prior predictive, no real tgt values
   # dat path:  real data, has tgt_col
   if (!is.null(cond) && is.null(dat)) {
     df <- cond
-    tgt_vals <- numeric(nrow(df))  # dummy zeros
-    onlyprior <- 1                 # force prior predictive if only cond given
-    message("No data given, prior predicitve checks will be performed")
+    tgt_vals <- numeric(nrow(df)) # dummy zeros
+    onlyprior <- 1 # force prior predictive if only cond given
+    message(
+      "No data given, onlyprior = 1 enforced leading to prior sampling
+      when running stan()"
+    )
   } else if (!is.null(dat) && is.null(cond)) {
     df <- dat
-    if(onlyprior == 1){
-      tgt_vals <- numeric(nrow(df))  # dummy zeros
-    }else{
+    if (onlyprior == 1) {
+      tgt_vals <- numeric(nrow(df)) # dummy zeros
+    } else {
       tgt_vals <- dat[[tgt_col]]
     }
   } else {
     stop("Provide either dat or cond, not both or neither.")
   }
-  
+
   # --- 3. Resolve std_modality and tgt_modality ----------------------------
   # Accept either task string ("loud_bright") or separate modality columns
   if ("task" %in% colnames(df)) {
@@ -228,10 +238,12 @@ make_datlist_generic <- function(
     std_modality <- modality_to_int(df$standard_modality)
     tgt_modality <- modality_to_int(df$target_modality)
   } else {
-    stop("Provide either a 'task' column or both 'standard_modality' and 
-         'target_modality' columns.")
+    stop(
+      "Provide either a 'task' column or both 'standard_modality' and 
+         'target_modality' columns."
+    )
   }
-  
+
   # --- 4. Resolve std column -----------------------------------------------
   # accept either "std" or "standard" as column name
   if ("std" %in% colnames(df)) {
@@ -243,7 +255,7 @@ make_datlist_generic <- function(
   } else {
     stop("No standard intensity column found. Expected 'std' or 'standard'.")
   }
-  
+
   # --- 5. Resolve p column -------------------------------------------------
   if ("p" %in% colnames(df)) {
     p_vals <- df$p
@@ -252,7 +264,7 @@ make_datlist_generic <- function(
   } else {
     stop("No production factor column found. Expected 'p' or 'prod_factor'.")
   }
-  
+
   # --- 6. Build condition index --------------------------------------------
   # multiple trials per unique (std_modality, tgt_modality, p, std) share idx
   cond_key <- data.frame(std_modality, tgt_modality, p = p_vals, std = std_vals)
@@ -260,49 +272,44 @@ make_datlist_generic <- function(
     group_by(std_modality, tgt_modality, p, std) %>%
     mutate(idx = cur_group_id()) %>% # assigns unique index
     pull(idx)
-  
+
   # unique conditions for ncond
   cond_unique <- cond_key %>%
     group_by(std_modality, tgt_modality, p, std) %>%
     summarise(.groups = "drop") %>%
     arrange(std_modality, tgt_modality, p, std)
-  
+
   # --- 7. Build sigidx -----------------------------------------------------
   if (!is.null(sigidx)) {
-    sigidx_vals <- sigidx                     
+    sigidx_vals <- sigidx
   } else if ("sigidx" %in% colnames(df)) {
-    sigidx_vals <- df$sigidx                   
+    sigidx_vals <- df$sigidx
   } else {
-    # Default: same sigma index for everything 
-    sigidx_vals <- rep(1, nrow(df))          
+    # Default: same sigma index for everything
+    sigidx_vals <- rep(1, nrow(df))
   }
-  
+
   # --- Fill in unused priors with default ----------------------------------
-  priors_path <- file.path(find.package("globalpsychophysics"), 
-                           "data", "default_priors.csv")
-  default_prior_params <- read.csv(priors_path, sep = ";") %>%
-    (\(x) setNames(as.list(x$value), x$parname))()
-  
-  resolved_params <- modifyList(default_prior_params, prior_params)
-  
+  resolved_params <- modifyList(default_gpm_priors, prior_params)
+
   # --- 8. Assemble datlist -------------------------------------------------
   datlist <- c(
     list(
-      ntotal       = nrow(df),
-      ncond        = nrow(cond_unique),
-      nsig         = max(sigidx_vals),
+      ntotal = nrow(df),
+      ncond = nrow(cond_unique),
+      nsig = max(sigidx_vals),
       std_modality = cond_unique$std_modality,
       tgt_modality = cond_unique$tgt_modality,
-      p            = cond_unique$p,
-      std          = cond_unique$std,
-      tgt          = tgt_vals,
-      idx          = idx,
-      sigidx       = sigidx_vals,
-      onlyprior    = onlyprior
+      p = cond_unique$p,
+      std = cond_unique$std,
+      tgt = tgt_vals,
+      idx = idx,
+      sigidx = sigidx_vals,
+      onlyprior = onlyprior
     ),
-    resolved_params  # prior parameters appended directly
+    resolved_params # prior parameters appended directly
   )
-  
+
   return(datlist)
 }
 
@@ -320,21 +327,28 @@ make_datlist_generic <- function(
 #' m <- estimate(data = matching[matching$id == 2, ], 48, references = "constant")
 #' print(m, pars = c("alpha_l", "beta_l", "beta_b", "omega1", "omega", "const_lb",
 #'                   "const_bl"), probs = c(.025, .975))
-#' 
+#'
 #' @export
-estimate <- function(data, ntrials,
-                     references = c("dependent", "independent", "constant")) {
+estimate <- function(
+  data,
+  ntrials,
+  references = c("dependent", "independent", "constant")
+) {
   references <- match.arg(references)
   # TODO: args for rstan::stan()
 
   datlist <- make_datlist(data, ntrials)
 
-  if ("p" %in% names(datlist)) {    # multiple p model
-    print("fitting model with multiple production factors and role-dependent
-      internal references")
-      # FIXME: hard coded path
+  if ("p" %in% names(datlist)) {
+    # multiple p model
+    print(
+      "fitting model with multiple production factors and role-dependent
+      internal references"
+    )
+    # FIXME: hard coded path
     model <- "R/stan/gpm.stan"
-  } else {                          # p=1 models
+  } else {
+    # p=1 models
     if (references == "constant") {
       print("fitting model with constant sum of internal references")
       model <- "R/stan/gpm_p1_const.stan"
@@ -344,6 +358,12 @@ estimate <- function(data, ntrials,
     }
   }
 
-  stan(file = model, data = datlist, chains = 4, warmup = 1000, iter = 10000,
-       control = list(max_treedepth = 15))
+  stan(
+    file = model,
+    data = datlist,
+    chains = 4,
+    warmup = 1000,
+    iter = 10000,
+    control = list(max_treedepth = 15)
+  )
 }
