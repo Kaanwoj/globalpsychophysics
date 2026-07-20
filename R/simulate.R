@@ -339,7 +339,8 @@ simulate_gpm <- function(ntrials, cond, param, replace_invalid = TRUE,
   if (any(invalid_mu)) {
     if (print_invalid) {
       message("--- BEFORE ---")
-      print(head(out[invalid_mu, ]))
+      print(out[invalid_mu, ])
+      print(param)
     }
     
     if (replace_invalid) {
@@ -352,14 +353,13 @@ simulate_gpm <- function(ntrials, cond, param, replace_invalid = TRUE,
       warning(paste(sum(invalid_mu), "invalid mu values detected and replaced",
                     "with modality-specific fallback values.",
                     "Check your predict_gpm function outputs."))
+      if (print_invalid) {
+        message("--- AFTER ---")
+        print(head(out[invalid_mu, ]))
+      }
     } else {
       warning(paste(sum(invalid_mu), "invalid mu values detected and left",
                     "in simulated data. This will produce NAs in rnorm."))
-    }
-    
-    if (print_invalid) {
-      message("--- AFTER ---")
-      print(head(out[invalid_mu, ]))
     }
   }
   
