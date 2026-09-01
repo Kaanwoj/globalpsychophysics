@@ -16,7 +16,7 @@ functions {
     return db_lambert(
       pow(
         inv(alpha_b) * 
-          (omega_1 * alpha_l * pow(db_inv_spl(x_loud), beta_l) -
+          (omega_1 * alpha_l * pow(db_inv_spl(x_loud), beta_l) +
            const_lb),
         inv(beta_b))
     );
@@ -26,7 +26,7 @@ functions {
     return db_spl(
        pow(
         inv(alpha_l) *
-          (omega_1 * alpha_b * pow(db_inv_lambert(x_bright), beta_b) -
+          (omega_1 * alpha_b * pow(db_inv_lambert(x_bright), beta_b) +
            const_bl), 
          inv(beta_l))
     );
@@ -72,8 +72,8 @@ model {
   target += lognormal_lpdf(alpha_l | log(10), 1);
   target += beta_lpdf(beta_b | 6, 6);
   target += beta_lpdf(beta_l | 6, 6);
-  target += normal_lpdf(const_lb | 0, 1);
-  target += normal_lpdf(const_bl | 0, 1);
+  target += normal_lpdf(const_lb | 1.5, .5);
+  target += normal_lpdf(const_bl | 1.5, .5);
   target += normal_lpdf(omega_1 | 1, 0.3);
   target += normal_lpdf(sig | 5, 3) - normal_lccdf(0 | 5, 3);
   if (!onlyprior) {

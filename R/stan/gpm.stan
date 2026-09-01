@@ -50,16 +50,19 @@ data {
   vector<lower=1>[ncond] std;
   array[ntotal] int<lower=1> idx;
   array[ntotal] int<lower=1> sigidx;
-  array[ntotal] real<lower=0> tgt;
+ // array[ntotal] real<lower=0> tgt;
+  array[ntotal] real tgt;
   int<lower=0, upper=1> onlyprior;
+  real lowestsoundstd;
+  real lowestlightstd;
   
   // priors
   real<lower=0> alpha_l_logmu;
   real<lower=0> alpha_l_logsigma;
-  real<lower=0> beta_b_a;
-  real<lower=0> beta_b_b;
-  real<lower=0> beta_l_a;
-  real<lower=0> beta_l_b;
+  real          beta_b_logmu;
+  real<lower=0> beta_b_logsigma;
+  real          beta_l_logmu;
+  real<lower=0> beta_l_logsigma;
   real<lower=0> rho_btol_mu;
   real<lower=0> rho_btol_sigma;
   real<lower=0> rho_bfroml_mu;
@@ -70,8 +73,8 @@ data {
   real<lower=0> rho_lfromb_sigma;
   real omega_1_logmu;
   real<lower=0> omega_1_logsigma;
-  real<lower=0> omega_a;
-  real<lower=0> omega_b;
+  real          omega_logmu;
+  real<lower=0> omega_logsigma;
   real<lower=0> sig_mu;
   real<lower=0> sig_sigma;
 }
@@ -80,14 +83,14 @@ transformed data {
 }
 parameters {
   real<lower=0> alpha_l;
-  real<lower=0, upper=1> beta_l;
-  real<lower=0, upper=1> beta_b;
+  real<lower=0> beta_l;
+  real<lower=0> beta_b;
   real<lower=0> omega_1;
-  real<lower=0, upper=1> omega;
+  real<lower=0> omega;
   vector<lower=0>[nsig] sig;
-  real rho_ltob;
+  real<upper=lowestsoundstd> rho_ltob;
   real rho_bfroml;
-  real rho_btol;
+  real<upper=lowestlightstd> rho_btol;
   real rho_lfromb;
 }
 transformed parameters {
@@ -105,14 +108,18 @@ transformed parameters {
 }
 model {
   target += lognormal_lpdf(alpha_l | alpha_l_logmu, alpha_l_logsigma);
-  target += beta_lpdf(beta_b | beta_b_a, beta_b_b);
-  target += beta_lpdf(beta_l | beta_l_a, beta_l_b);
-  target += normal_lpdf(rho_btol | rho_btol_mu, rho_btol_sigma);
+  target += lognormal_lpdf(beta_b | beta_b_logmu, beta_b_logsigma);
+  target += lognormal_lpdf(beta_l | beta_l_logmu, beta_l_logsigma);
+  target += normal_lpdf(rho_btol | rho_btol_mu, rho_btol_sigma) -
+              normal_lcdf(lowestlightstd | rho_btol_mu, rho_btol_sigma);
+              // normal_lcdf with a constant does not change the sampling, but
+              // defining the variable with upper=lowest... does the trucation
   target += normal_lpdf(rho_bfroml | rho_bfroml_mu, rho_bfroml_sigma);
-  target += normal_lpdf(rho_ltob | rho_ltob_mu, rho_ltob_sigma);
+  target += normal_lpdf(rho_ltob | rho_ltob_mu, rho_ltob_sigma) -
+              normal_lcdf(lowestsoundstd | rho_ltob_mu, rho_ltob_sigma);
   target += normal_lpdf(rho_lfromb | rho_lfromb_mu, rho_lfromb_sigma);
   target += lognormal_lpdf(omega_1 | omega_1_logmu, omega_1_logsigma);
-  target += beta_lpdf(omega | omega_a, omega_b);
+  target += lognormal_lpdf(omega | omega_logmu, omega_logsigma);
   target += normal_lpdf(sig | sig_mu, sig_sigma) -
               normal_lccdf(0 | sig_mu, sig_sigma);
   
@@ -124,4 +131,8 @@ generated quantities {
   array[ntotal] real tgt_pred = normal_rng(
     to_vector(mu)[idx],
     to_vector(sig[sigidx]));
+  array[ntotal] real log_lik;
+  for (i in 1:ntotal) {
+    log_lik[i] = normal_lpdf(tgt[i] | mu[idx[i]], sig[sigidx[i]]);
+  }
 }
